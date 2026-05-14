@@ -1,99 +1,50 @@
-import { AxiosError } from 'axios';
-import { useMemo, useState } from 'react';
-import { ProjectForm } from '../components/projects/ProjectForm';
-import type { CreateProjectFormPayload } from '../components/projects/projectFormSchema';
+import { Plus } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { ProjectList } from '../components/projects/ProjectList';
-import { resizeImageToBase64 } from '../lib/resizeImageToBase64';
-import { createProject as createProjectApi } from '../services/projectApi';
-import { uploadToCloudinary } from '../services/uploadApi';
 import { useAuthStore } from '../stores/authStore';
 import { getVisibleProjects, useProjectStore } from '../stores/projectStore';
-import type { Project } from '../types/project';
-
-type ApiErrorResponse = {
-  message?: string;
-};
 
 export function ProjectsPage() {
   const user = useAuthStore((state) => state.user)!;
   const allProjects = useProjectStore((state) => state.projects);
-  const actionAddProject = useProjectStore((state) => state.actionAddProject);
-  const [createError, setCreateError] = useState('');
   const projects = useMemo(() => getVisibleProjects(allProjects, user), [allProjects, user]);
-
   const canCreate = user.role === 'USER' || user.role === 'ADMIN';
-  const helperText = useMemo(() => {
-    if (user.role === 'ADMIN') {
-      return 'ADMIN can create and manage projects. Backend API integration can replace this local store later.';
-    }
-
-    if (user.role === 'GUEST') {
-      return 'GUEST can view assigned projects only.';
-    }
-
-    return 'USER can create and manage only their own projects.';
-  }, [user.role]);
-
-  const handleCreateProject = async (payload: CreateProjectFormPayload) => {
-    try {
-      setCreateError('');
-
-      const uploadedImages = await Promise.all(
-        payload.images.map(async (image) => {
-          const base64 = await resizeImageToBase64(image.file);
-
-          const uploadedImage = await uploadToCloudinary({
-            name: image.name,
-            file: base64,
-            type: image.type,
-          });
-          
-          return {
-            name: uploadedImage.name,
-            url: uploadedImage.url,
-            publicId: uploadedImage.publicId ?? null,
-            type: image.type,
-          };
-        }),
-      );
-
-      const createdProject = await createProjectApi({
-        title: payload.title,
-        description: payload.description,
-        status: payload.status,
-        isActive: payload.isActive,
-        images: uploadedImages,
-      });
-
-      actionAddProject(normalizeProjectForClient(createdProject, user.id));
-    } catch (error) {
-      const message =
-        error instanceof AxiosError
-          ? (error.response?.data as ApiErrorResponse | undefined)?.message
-          : undefined;
-
-      setCreateError(message ?? 'Cannot create project. Please check project data and uploaded files.');
-      throw error;
-    }
-  };
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-      <ProjectForm canCreate={canCreate} errorMessage={createError} helperText={helperText} onCreate={handleCreateProject} />
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="space-y-5"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.06, duration: 0.3, ease: 'easeOut' }}
+        className="flex flex-wrap items-center justify-between gap-4"
+      >
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Projects</p>
+          <h2 className="mt-1 text-2xl font-semibold text-slate-950">Project list</h2>
+          <p className="mt-1 text-sm text-slate-500">Browse projects available to your current role.</p>
+        </div>
+
+        {canCreate ? (
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.99 }}>
+            <Link
+            to="/projects/new"
+              className="flex items-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-100 hover:bg-sky-700 hover:shadow-md hover:shadow-sky-100"
+            >
+              <Plus size={16} />
+              Add project
+            </Link>
+          </motion.div>
+        ) : null}
+      </motion.div>
+
       <ProjectList projects={projects} />
-    </div>
+    </motion.div>
   );
-}
-
-function normalizeProjectForClient(project: Project, fallbackUserId: string): Project {
-  const now = new Date().toISOString();
-
-  return {
-    ...project,
-    description: project.description ?? null,
-    createdAt: project.createdAt ?? now,
-    updatedAt: project.updatedAt ?? now,
-    createdById: project.createdById ?? fallbackUserId,
-    images: project.images ?? [],
-  };
 }

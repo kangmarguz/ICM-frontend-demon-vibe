@@ -4,6 +4,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { LoginPage } from '../pages/LoginPage';
 import { HomePage } from '../pages/HomePage';
 import { ProjectsPage } from '../pages/ProjectsPage';
+import { AddProjectPage } from '../pages/AddProjectPage';
 import { UsersPage } from '../pages/UsersPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <HomePage /> },
           { path: 'projects', element: <ProjectsPage /> },
+          { path: 'projects/new', element: <AddProjectPage /> },
           { path: 'users', element: <UsersPage /> },
           { path: 'settings', element: <SettingsPage /> },
         ],

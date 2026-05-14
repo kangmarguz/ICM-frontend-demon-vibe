@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -155,7 +156,13 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate }: P
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
+    <motion.section
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.12, duration: 0.35, ease: 'easeOut' }}
+      whileHover={{ y: -2, boxShadow: '0 12px 30px rgb(15 23 42 / 0.08)' }}
+      className="rounded-lg border border-slate-200 bg-white p-5"
+    >
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-slate-950">Add project</h2>
         <p className="mt-1 text-sm leading-6 text-slate-500">{helperText}</p>
@@ -243,19 +250,28 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate }: P
           />
         </div>
 
-        <button
+        <motion.button
           type="submit"
           disabled={!canCreate || isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          whileHover={!canCreate || isSubmitting ? undefined : { y: -1 }}
+          whileTap={!canCreate || isSubmitting ? undefined : { scale: 0.99 }}
+          className="flex w-full items-center justify-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-100 hover:bg-sky-700 hover:shadow-md hover:shadow-sky-100 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           <Plus size={16} />
           {isSubmitting ? 'Creating project...' : 'Create project'}
-        </button>
+        </motion.button>
 
         {errorMessage ? (
-          <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{errorMessage}</div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+          >
+            {errorMessage}
+          </motion.div>
         ) : null}
       </form>
-    </section>
+    </motion.section>
   );
 }

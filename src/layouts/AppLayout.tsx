@@ -1,12 +1,13 @@
-import { LogOut, PanelLeft, Settings, Users, FolderKanban, Home } from 'lucide-react';
+import { LogOut, PanelLeft, Settings, Users, FolderKanban, Home, PlusSquare } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 
 const menuItems = [
-  { to: '/', label: 'Home', icon: Home },
-  { to: '/projects', label: 'Projects', icon: FolderKanban },
-  { to: '/users', label: 'Users', icon: Users },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/', label: 'Home', icon: Home, end: true },
+  { to: '/projects', label: 'Projects', icon: FolderKanban, end: true },
+  { to: '/projects/new', label: 'Add Project', icon: PlusSquare, end: true },
+  { to: '/users', label: 'Users', icon: Users, end: true },
+  { to: '/settings', label: 'Settings', icon: Settings, end: true },
 ];
 
 export function AppLayout() {
@@ -40,7 +41,7 @@ export function AppLayout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === '/'}
+                end={item.end}
                 className={({ isActive }) =>
                   [
                     'flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition',

@@ -1,4 +1,5 @@
 import { ImageIcon } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { Project } from '../../types/project';
 
 type ProjectListProps = {
@@ -7,7 +8,12 @@ type ProjectListProps = {
 
 export function ProjectList({ projects }: ProjectListProps) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white">
+    <motion.section
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.12, duration: 0.35, ease: 'easeOut' }}
+      className="rounded-lg border border-slate-200 bg-white"
+    >
       <div className="border-b border-slate-200 px-6 py-4">
         <h2 className="text-lg font-semibold text-slate-950">Projects</h2>
         <p className="text-sm text-slate-500">Project list is filtered by the current role.</p>
@@ -18,7 +24,15 @@ export function ProjectList({ projects }: ProjectListProps) {
       ) : (
         <div className="divide-y divide-slate-200">
           {projects.map((project) => (
-            <article key={project.id} className="px-6 py-5">
+            <motion.article
+              layout
+              key={project.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              whileHover={{ y: -2, boxShadow: '0 12px 30px rgb(15 23 42 / 0.08)' }}
+              className="px-6 py-5"
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold text-slate-950">{project.title}</h3>
@@ -56,10 +70,10 @@ export function ProjectList({ projects }: ProjectListProps) {
                   No images
                 </div>
               )}
-            </article>
+            </motion.article>
           ))}
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }
