@@ -38,6 +38,7 @@ type ProjectFormProps = {
   errorMessage?: string;
   helperText: string;
   onCreate: (payload: CreateProjectFormPayload) => Promise<void> | void;
+  showProjectControls?: boolean;
 };
 
 const emptyPendingImages: Record<ImageType, PendingImage[]> = {
@@ -46,7 +47,7 @@ const emptyPendingImages: Record<ImageType, PendingImage[]> = {
   PAY_SLIP: [],
 };
 
-export function ProjectForm({ canCreate, errorMessage, helperText, onCreate }: ProjectFormProps) {
+export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, showProjectControls = true }: ProjectFormProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     register,
@@ -190,32 +191,34 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate }: P
           />
         </label>
 
-        <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700">Status</span>
-            <select
-              {...register('status')}
-              disabled={!canCreate || isSubmitting}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
-            >
-              {projectStatuses.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
+        {showProjectControls ? (
+          <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700">Status</span>
+              <select
+                {...register('status')}
+                disabled={!canCreate || isSubmitting}
+                className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+              >
+                {projectStatuses.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="flex items-center gap-2 rounded border border-slate-200 px-3 py-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              {...register('isActive')}
-              disabled={!canCreate || isSubmitting}
-              className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-            />
-            Active
-          </label>
-        </div>
+            <label className="flex items-center gap-2 rounded border border-slate-200 px-3 py-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                {...register('isActive')}
+                disabled={!canCreate || isSubmitting}
+                className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+              />
+              Active
+            </label>
+          </div>
+        ) : null}
 
         <div className="space-y-4">
           <span className="text-sm font-medium text-slate-700">Project files</span>

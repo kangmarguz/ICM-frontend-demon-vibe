@@ -106,7 +106,13 @@ export function AddProjectPage() {
         </motion.div>
       </motion.div>
 
-      <ProjectForm canCreate={canCreate} errorMessage={createError} helperText={helperText} onCreate={handleCreateProject} />
+      <ProjectForm
+        canCreate={canCreate}
+        errorMessage={createError}
+        helperText={helperText}
+        onCreate={handleCreateProject}
+        showProjectControls={user.role !== 'USER'}
+      />
     </motion.div>
   );
 }

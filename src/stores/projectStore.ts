@@ -21,6 +21,7 @@ type CreateProjectInput = {
 type ProjectState = {
   projects: Project[];
   actionAddProject: (project: Project) => void;
+  actionSetProjects: (projects: Project[]) => void;
   createProject: (input: CreateProjectInput) => void;
 };
 
@@ -42,6 +43,10 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set((state) => ({
       projects: [project, ...state.projects],
     })),
+  actionSetProjects: (projects) =>
+    set({
+      projects: projects,
+    }),
   createProject: (input) =>
     set((state) => {
       const now = new Date().toISOString();

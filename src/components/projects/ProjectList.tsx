@@ -3,10 +3,12 @@ import { motion } from 'motion/react';
 import type { Project } from '../../types/project';
 
 type ProjectListProps = {
+  errorMessage?: string;
+  isLoading?: boolean;
   projects: Project[];
 };
 
-export function ProjectList({ projects }: ProjectListProps) {
+export function ProjectList({ errorMessage, isLoading = false, projects }: ProjectListProps) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 14 }}
@@ -19,7 +21,11 @@ export function ProjectList({ projects }: ProjectListProps) {
         <p className="text-sm text-slate-500">Project list is filtered by the current role.</p>
       </div>
 
-      {projects.length === 0 ? (
+      {isLoading ? (
+        <div className="px-6 py-10 text-sm text-slate-500">Loading projects...</div>
+      ) : errorMessage ? (
+        <div className="px-6 py-10 text-sm text-rose-600">{errorMessage}</div>
+      ) : projects.length === 0 ? (
         <div className="px-6 py-10 text-sm text-slate-500">No projects yet.</div>
       ) : (
         <div className="divide-y divide-slate-200">
