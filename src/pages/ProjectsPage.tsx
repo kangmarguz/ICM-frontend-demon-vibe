@@ -46,11 +46,18 @@ export function ProjectsPage() {
             quality: 0.8,
           });
 
-          return uploadToCloudinary({
+          const uploadedImage = await uploadToCloudinary({
             name: image.name,
             file: base64,
             type: image.type,
           });
+          
+          return {
+            name: uploadedImage.name,
+            url: uploadedImage.url,
+            publicId: uploadedImage.publicId ?? null,
+            type: image.type,
+          };
         }),
       );
 
