@@ -16,6 +16,7 @@ export type ProjectImageField = {
 export type CreateProjectFormPayload = {
   title: string;
   description?: string;
+  urlLink?: string;
   status: ProjectStatus;
   isActive: boolean;
   images: Array<{
@@ -48,6 +49,13 @@ export const imageFields: ProjectImageField[] = [
 export const projectSchema = z.object({
   title: z.string().trim().min(1, 'Project title is required'),
   description: z.string().trim().optional(),
+  urlLink: z
+    .string()
+    .trim()
+    .refine((value) => value.length === 0 || z.string().url().safeParse(value).success, {
+      message: 'URL link must be a valid URL',
+    })
+    .optional(),
   status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCEL']),
   isActive: z.boolean(),
 });

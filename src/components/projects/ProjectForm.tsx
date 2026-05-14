@@ -41,6 +41,7 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, sho
     defaultValues: {
       title: '',
       description: '',
+      urlLink: '',
       status: 'PENDING',
       isActive: true,
     },
@@ -107,6 +108,7 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, sho
     reset({
       title: '',
       description: '',
+      urlLink: '',
       status: 'PENDING',
       isActive: true,
     });
@@ -125,6 +127,7 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, sho
     await onCreate({
       title: data.title,
       description: data.description ?? '',
+      urlLink: data.urlLink ?? '',
       status: data.status,
       isActive: data.isActive,
       images: imageFields.flatMap((field) =>
@@ -171,6 +174,18 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, sho
             className="mt-1 min-h-24 w-full resize-none rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
             placeholder="Short project detail"
           />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">URL link</span>
+          <input
+            {...register('urlLink')}
+            type="url"
+            disabled={!canCreate || isSubmitting}
+            className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+            placeholder="https://example.com/project"
+          />
+          {errors.urlLink ? <p className="mt-1 text-sm text-rose-600">{errors.urlLink.message}</p> : null}
         </label>
 
         {showProjectControls ? (

@@ -60,6 +60,7 @@ export function AddProjectPage() {
       const createdProject = await createProjectApi({
         title: payload.title,
         description: payload.description,
+        urlLink: payload.urlLink,
         status: payload.status,
         isActive: payload.isActive,
         images: uploadedImages,
@@ -123,6 +124,7 @@ function normalizeProjectForClient(project: Project, fallbackUserId: string): Pr
   return {
     ...project,
     description: project.description ?? null,
+    urlLink: project.urlLink ?? null,
     createdAt: project.createdAt ?? now,
     updatedAt: project.updatedAt ?? now,
     createdById: project.createdById ?? fallbackUserId,

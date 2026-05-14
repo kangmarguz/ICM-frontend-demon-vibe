@@ -4,6 +4,7 @@ import type { ImageType, Project, ProjectImage, ProjectStatus } from '../types/p
 export type CreateProjectRequest = {
   title: string;
   description?: string;
+  urlLink?: string;
   status: ProjectStatus;
   isActive: boolean;
   images: Array<{
@@ -17,6 +18,7 @@ export type CreateProjectRequest = {
 export type UpdateProjectRequest = {
   title: string;
   description?: string;
+  urlLink?: string;
   status: ProjectStatus;
   isActive: boolean;
   images?: Array<{
@@ -103,6 +105,7 @@ function normalizeProject(project: ProjectApiResponse): Project {
     ...project,
     createdById: project.createdById ?? getOptionalString(createdBy, 'id') ?? null,
     description: project.description ?? null,
+    urlLink: project.urlLink ?? null,
     images: normalizeProjectImages(project),
   };
 }

@@ -6,7 +6,7 @@ const menuItems = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/projects', label: 'Projects', icon: FolderKanban, end: true },
   { to: '/projects/new', label: 'Add Project', icon: PlusSquare, end: true },
-  { to: '/users', label: 'Users', icon: Users, end: true },
+  { to: '/users', label: 'Users', icon: Users, end: true, hiddenForRoles: ['USER'] },
   { to: '/settings', label: 'Settings', icon: Settings, end: true },
 ];
 
@@ -34,7 +34,9 @@ export function AppLayout() {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {menuItems.map((item) => {
+          {menuItems
+            .filter((item) => !user?.role || !item.hiddenForRoles?.includes(user.role))
+            .map((item) => {
             const Icon = item.icon;
 
             return (

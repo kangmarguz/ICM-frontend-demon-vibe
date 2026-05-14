@@ -16,6 +16,7 @@ export type Project = {
   id: string;
   title: string;
   description?: string | null;
+  urlLink?: string | null;
   status: ProjectStatus;
   isActive: boolean;
   createdAt: string;
