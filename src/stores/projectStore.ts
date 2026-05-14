@@ -20,6 +20,7 @@ type CreateProjectInput = {
 
 type ProjectState = {
   projects: Project[];
+  actionAddProject: (project: Project) => void;
   createProject: (input: CreateProjectInput) => void;
 };
 
@@ -37,6 +38,10 @@ export function getVisibleProjects(projects: Project[], user: AppUser) {
 
 export const useProjectStore = create<ProjectState>((set) => ({
   projects: [],
+  actionAddProject: (project) =>
+    set((state) => ({
+      projects: [project, ...state.projects],
+    })),
   createProject: (input) =>
     set((state) => {
       const now = new Date().toISOString();
