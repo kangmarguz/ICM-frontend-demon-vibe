@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
 import { Save, Settings, UserRound } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -95,12 +96,22 @@ export function SettingsPage() {
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white">
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="rounded-lg border border-slate-200 bg-white"
+    >
       <div className="border-b border-slate-200 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded bg-slate-100 text-slate-700">
+          <motion.div
+            initial={{ scale: 0.94, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.08, duration: 0.25, ease: 'easeOut' }}
+            className="flex h-10 w-10 items-center justify-center rounded bg-slate-100 text-slate-700"
+          >
             <Settings size={20} />
-          </div>
+          </motion.div>
           <div>
             <h2 className="text-lg font-semibold text-slate-950">Settings</h2>
             <p className="text-sm text-slate-500">Edit your current profile data.</p>
@@ -109,7 +120,12 @@ export function SettingsPage() {
       </div>
 
       <div className="grid gap-6 p-6 lg:grid-cols-[280px_1fr]">
-        <aside className="rounded-lg border border-slate-200 p-4">
+        <motion.aside
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.3, ease: 'easeOut' }}
+          className="rounded-lg border border-slate-200 p-4"
+        >
           <div className="mb-4 flex h-11 w-11 items-center justify-center rounded bg-sky-50 text-sky-700">
             <UserRound size={22} />
           </div>
@@ -118,9 +134,15 @@ export function SettingsPage() {
           <p className="mt-3 w-fit rounded bg-sky-50 px-3 py-1 text-xs font-semibold uppercase text-sky-700">
             {user.role}
           </p>
-        </aside>
+        </motion.aside>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <motion.form
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.16, duration: 0.3, ease: 'easeOut' }}
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
           <label className="block">
             <span className="text-sm font-medium text-slate-700">Name</span>
             <input
@@ -181,19 +203,21 @@ export function SettingsPage() {
             </label>
           </div>
 
-          <button
+          <motion.button
             type="submit"
             disabled={isSubmitting}
+            whileHover={isSubmitting ? undefined : { y: -1 }}
+            whileTap={isSubmitting ? undefined : { scale: 0.99 }}
             className="inline-flex items-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             <Save size={16} />
             {isSubmitting ? 'Saving...' : 'Save settings'}
-          </button>
+          </motion.button>
 
           {saveError ? <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{saveError}</div> : null}
           {saveSuccess ? <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{saveSuccess}</div> : null}
-        </form>
+        </motion.form>
       </div>
-    </section>
+    </motion.section>
   );
 }
