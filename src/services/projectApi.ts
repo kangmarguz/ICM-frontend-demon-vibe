@@ -64,9 +64,11 @@ export async function getProjectsByUserId(userId: string) {
 }
 
 function normalizeProject(project: ProjectApiResponse): Project {
+  const createdBy = asRecord(project.createdBy);
+
   return {
     ...project,
-    createdById: project.createdById ?? null,
+    createdById: project.createdById ?? getOptionalString(createdBy, 'id') ?? null,
     description: project.description ?? null,
     images: normalizeProjectImages(project),
   };
@@ -96,4 +98,14 @@ function asRecord(value: unknown): Record<string, unknown> {
   }
 
   return {};
+}
+
+function getOptionalString(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return undefined;
 }

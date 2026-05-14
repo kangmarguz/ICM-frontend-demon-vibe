@@ -29,7 +29,6 @@ export function ProjectsPage() {
         setIsLoading(true);
         setFetchError('');
         const nextProjects = user.role === 'ADMIN' ? await getProjects() : await getProjectsByUserId(user.id);
-
         if (isMounted) {
           actionSetProjects(nextProjects);
         }
