@@ -1,4 +1,4 @@
-export type ProjectStatus = 'PENDING' | 'PROGRESS' | 'COMPLETED' | 'CANCEL';
+export type ProjectStatus = 'PENDING' | 'PROGRESS' | 'COMPLETED' | 'CANCELLED';
 export type ImageType = 'IMAGE_2D' | 'IMAGE_3D' | 'PAY_SLIP';
 
 export type ProjectImage = {

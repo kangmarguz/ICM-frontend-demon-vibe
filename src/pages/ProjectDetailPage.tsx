@@ -27,7 +27,7 @@ const editProjectSchema = z.object({
       message: 'URL link must be a valid URL',
     })
     .optional(),
-  status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCEL']),
+  status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCELLED']),
   isActive: z.boolean(),
 });
 
