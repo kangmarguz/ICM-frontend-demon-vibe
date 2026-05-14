@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
-import { ArrowLeft, ImageIcon, Save, Trash2, UploadCloud } from 'lucide-react';
+import { ArrowLeft, ImageIcon, Save, Settings, Trash2, UploadCloud, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -45,6 +45,7 @@ export function ProjectDetailPage() {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [deletingPublicId, setDeletingPublicId] = useState<string | null>(null);
   const [draggingField, setDraggingField] = useState<ImageType | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [pendingImages, setPendingImages] = useState<Record<ImageType, PendingImage[]>>({
     IMAGE_2D: [],
     IMAGE_3D: [],
@@ -200,6 +201,32 @@ export function ProjectDetailPage() {
     });
   };
 
+  const handleStartEditing = () => {
+    setSaveError('');
+    setSaveSuccess('');
+    setImageError('');
+    setImageSuccess('');
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    if (project) {
+      reset({
+        title: project.title,
+        description: project.description ?? '',
+        status: project.status,
+        isActive: project.isActive,
+      });
+    }
+
+    clearPendingImages();
+    setSaveError('');
+    setSaveSuccess('');
+    setImageError('');
+    setImageSuccess('');
+    setIsEditing(false);
+  };
+
   const onSubmit = async (data: EditProjectFormData) => {
     if (!projectId || !canEdit) {
       return;
@@ -218,6 +245,7 @@ export function ProjectDetailPage() {
       setProject(updatedProject);
       actionUpdateProject(updatedProject);
       setSaveSuccess('Project updated.');
+      setIsEditing(false);
     } catch (error) {
       const message =
         error instanceof AxiosError
@@ -359,72 +387,130 @@ export function ProjectDetailPage() {
             transition={{ delay: 0.08, duration: 0.3, ease: 'easeOut' }}
             className="rounded-lg border border-slate-200 bg-white p-5"
           >
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <label className="block">
-                <span className="text-sm font-medium text-slate-700">Title</span>
-                <input
-                  {...register('title')}
-                  disabled={!canEdit || isSubmitting}
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
-                />
-                {errors.title ? <p className="mt-1 text-sm text-rose-600">{errors.title.message}</p> : null}
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-medium text-slate-700">Description</span>
-                <textarea
-                  {...register('description')}
-                  disabled={!canEdit || isSubmitting}
-                  className="mt-1 min-h-32 w-full resize-none rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
-                />
-              </label>
-
-              {showProjectControls ? (
-                <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-                  <label className="block">
-                    <span className="text-sm font-medium text-slate-700">Status</span>
-                    <select
-                      {...register('status')}
-                      disabled={!canEdit || isSubmitting}
-                      className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
-                    >
-                      {projectStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="flex items-center gap-2 rounded border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      {...register('isActive')}
-                      disabled={!canEdit || isSubmitting}
-                      className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                    />
-                    Active
-                  </label>
-                </div>
-              ) : null}
-
-              <div className="flex flex-wrap items-center gap-3">
-                <motion.button
-                  type="submit"
-                  disabled={!canEdit || isSubmitting}
-                  whileHover={!canEdit || isSubmitting ? undefined : { y: -1 }}
-                  whileTap={!canEdit || isSubmitting ? undefined : { scale: 0.99 }}
-                  className="flex items-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                >
-                  <Save size={16} />
-                  {isSubmitting ? 'Saving...' : 'Save changes'}
-                </motion.button>
-                {!canEdit ? <p className="text-sm text-slate-500">You can view this project but cannot edit it.</p> : null}
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-semibold text-slate-950">{isEditing ? 'Edit project' : project.title}</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {isEditing ? 'Update project information and manage uploaded images.' : 'Project information is read-only until you open edit mode.'}
+                </p>
               </div>
 
-              {saveError ? <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{saveError}</div> : null}
-              {saveSuccess ? <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{saveSuccess}</div> : null}
-            </form>
+              {canEdit ? (
+                isEditing ? (
+                  <button
+                    type="button"
+                    onClick={handleCancelEditing}
+                    disabled={isSubmitting || isUploadingImages}
+                    aria-label="Cancel editing"
+                    title="Cancel editing"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <X size={18} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleStartEditing}
+                    aria-label="Edit project"
+                    title="Edit project"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  >
+                    <Settings size={18} />
+                  </button>
+                )
+              ) : null}
+            </div>
+
+            {isEditing ? (
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <label className="block">
+                  <span className="text-sm font-medium text-slate-700">Title</span>
+                  <input
+                    {...register('title')}
+                    disabled={!canEdit || isSubmitting}
+                    className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+                  />
+                  {errors.title ? <p className="mt-1 text-sm text-rose-600">{errors.title.message}</p> : null}
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-medium text-slate-700">Description</span>
+                  <textarea
+                    {...register('description')}
+                    disabled={!canEdit || isSubmitting}
+                    className="mt-1 min-h-32 w-full resize-none rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+                  />
+                </label>
+
+                {showProjectControls ? (
+                  <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+                    <label className="block">
+                      <span className="text-sm font-medium text-slate-700">Status</span>
+                      <select
+                        {...register('status')}
+                        disabled={!canEdit || isSubmitting}
+                        className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+                      >
+                        {projectStatuses.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="flex items-center gap-2 rounded border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        {...register('isActive')}
+                        disabled={!canEdit || isSubmitting}
+                        className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                      />
+                      Active
+                    </label>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <motion.button
+                    type="submit"
+                    disabled={!canEdit || isSubmitting}
+                    whileHover={!canEdit || isSubmitting ? undefined : { y: -1 }}
+                    whileTap={!canEdit || isSubmitting ? undefined : { scale: 0.99 }}
+                    className="flex items-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    <Save size={16} />
+                    {isSubmitting ? 'Saving...' : 'Save changes'}
+                  </motion.button>
+                </div>
+
+                {saveError ? <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{saveError}</div> : null}
+                {saveSuccess ? <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{saveSuccess}</div> : null}
+              </form>
+            ) : (
+              <div className="space-y-5">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Description</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">{project.description || 'No description'}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded bg-sky-50 px-3 py-1 text-xs font-semibold uppercase text-sky-700">
+                    {project.status}
+                  </span>
+                  <span
+                    className={`rounded px-3 py-1 text-xs font-semibold uppercase ${
+                      project.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                    }`}
+                  >
+                    {project.isActive ? 'ACTIVE' : 'INACTIVE'}
+                  </span>
+                </div>
+
+                {!canEdit ? <p className="text-sm text-slate-500">You can view this project but cannot edit it.</p> : null}
+                {saveSuccess ? <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{saveSuccess}</div> : null}
+              </div>
+            )}
           </motion.section>
 
           <motion.aside
@@ -452,7 +538,7 @@ export function ProjectDetailPage() {
                           <img src={image.url} alt={image.name} className="h-28 w-full object-cover" />
                           <figcaption className="space-y-2 px-2 py-2">
                             <p className="truncate text-xs text-slate-500">{image.name}</p>
-                            {canEdit && image.publicId ? (
+                            {canEdit && isEditing && image.publicId ? (
                               <button
                                 type="button"
                                 onClick={() => handleDeleteImage(image.publicId)}
@@ -472,7 +558,7 @@ export function ProjectDetailPage() {
               ))}
             </div>
 
-            {canEdit ? (
+            {canEdit && isEditing ? (
               <div className="mt-6 border-t border-slate-200 pt-5">
                 <div className="mb-3">
                   <p className="text-sm font-semibold text-slate-950">Add images</p>

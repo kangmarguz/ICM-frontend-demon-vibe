@@ -1,4 +1,4 @@
-import { ImageIcon } from 'lucide-react';
+import { ImageIcon, Settings } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import type { Project } from '../../types/project';
@@ -40,24 +40,39 @@ export function ProjectList({ errorMessage, isLoading = false, projects }: Proje
               whileHover={{ y: -2, boxShadow: '0 12px 30px rgb(15 23 42 / 0.08)' }}
               className="px-6 py-5"
             >
-              <Link to={`/projects/${project.id}`} className="block">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-slate-950">{project.title}</h3>
-                  {project.description ? (
-                    <p className="mt-1 text-sm leading-6 text-slate-500">{project.description}</p>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded bg-sky-50 px-3 py-1 text-xs font-semibold uppercase text-sky-700">
-                    {project.status}
-                  </span>
-                  <span className="rounded bg-slate-100 px-3 py-1 text-xs font-semibold uppercase text-slate-600">
-                    {project.isActive ? 'ACTIVE' : 'INACTIVE'}
-                  </span>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <Link to={`/projects/${project.id}`} className="block min-w-0 flex-1">
+                  <div>
+                    <h3 className="font-semibold text-slate-950">{project.title}</h3>
+                    {project.description ? (
+                      <p className="mt-1 text-sm leading-6 text-slate-500">{project.description}</p>
+                    ) : null}
+                  </div>
+                </Link>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    to={`/projects/${project.id}`}
+                    aria-label={`Edit ${project.title}`}
+                    title="Edit project"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  >
+                    <Settings size={16} />
+                  </Link>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded bg-sky-50 px-3 py-1 text-xs font-semibold uppercase text-sky-700">
+                      {project.status}
+                    </span>
+                    <span
+                      className={`rounded px-3 py-1 text-xs font-semibold uppercase ${
+                        project.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                      }`}
+                    >
+                      {project.isActive ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              </Link>
 
               {project.images.length > 0 ? (
                 <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
