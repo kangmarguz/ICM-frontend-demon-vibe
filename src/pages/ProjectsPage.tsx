@@ -1,59 +1,22 @@
 import { Plus } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ProjectList } from '../components/projects/ProjectList';
-import { getProjects, getProjectsByUserId } from '../services/projectApi';
+import { useLoadProjects } from '../hooks/useLoadProjects';
 import { useAuthStore } from '../stores/authStore';
 import { getVisibleProjects, useProjectStore } from '../stores/projectStore';
-import { AxiosError } from 'axios';
-
-type ApiErrorResponse = {
-  message?: string;
-};
 
 export function ProjectsPage() {
   const user = useAuthStore((state) => state.user)!;
   const allProjects = useProjectStore((state) => state.projects);
-  const actionSetProjects = useProjectStore((state) => state.actionSetProjects);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fetchError, setFetchError] = useState('');
+  const { isLoadingProjects, loadProjects, loadProjectsError } = useLoadProjects(user);
   const projects = useMemo(() => getVisibleProjects(allProjects, user), [allProjects, user]);
   const canCreate = user.role === 'USER' || user.role === 'ADMIN';
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchProjects = async () => {
-      try {
-        setIsLoading(true);
-        setFetchError('');
-        const nextProjects = user.role === 'ADMIN' ? await getProjects() : await getProjectsByUserId(user.id);
-        if (isMounted) {
-          actionSetProjects(nextProjects);
-        }
-      } catch (error) {
-        const message =
-          error instanceof AxiosError
-            ? (error.response?.data as ApiErrorResponse | undefined)?.message
-            : undefined;
-
-        if (isMounted) {
-          setFetchError(message ?? 'Cannot load projects.');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchProjects();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [actionSetProjects, user.id, user.role]);
+    loadProjects();
+  }, [loadProjects]);
 
   return (
     <motion.div
@@ -87,7 +50,7 @@ export function ProjectsPage() {
         ) : null}
       </motion.div>
 
-      <ProjectList errorMessage={fetchError} isLoading={isLoading} projects={projects} />
+      <ProjectList errorMessage={loadProjectsError} isLoading={isLoadingProjects} projects={projects} />
     </motion.div>
   );
 }

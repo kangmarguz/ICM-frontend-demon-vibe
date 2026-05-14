@@ -1,5 +1,6 @@
 import { FolderKanban, ShieldCheck, UserRound, UsersRound } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useLoadProjects } from '../hooks/useLoadProjects';
 import { useAuthStore } from '../stores/authStore';
 import { getVisibleProjects, useProjectStore } from '../stores/projectStore';
 import type { Role } from '../types/auth';
@@ -25,6 +26,7 @@ const roleContent: Record<Role, { title: string; description: string; icon: type
 export function HomePage() {
   const user = useAuthStore((state) => state.user)!;
   const allProjects = useProjectStore((state) => state.projects);
+  const { isLoadingProjects, loadProjects, loadProjectsError } = useLoadProjects(user);
   const projects = useMemo(() => getVisibleProjects(allProjects, user), [allProjects, user]);
   const activeProjects = useMemo(() => projects.filter((project) => project.isActive), [projects]);
   const imageCount = useMemo(
@@ -32,6 +34,10 @@ export function HomePage() {
     [projects],
   );
   const RoleIcon = roleContent[user.role].icon;
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
 
   return (
     <div className="space-y-6">
@@ -71,7 +77,9 @@ export function HomePage() {
         </div>
 
         {projects.length === 0 ? (
-          <div className="px-6 py-10 text-sm text-slate-500">No projects yet.</div>
+          <div className="px-6 py-10 text-sm text-slate-500">
+            {isLoadingProjects ? 'Loading projects...' : loadProjectsError || 'No projects yet.'}
+          </div>
         ) : (
           <div className="divide-y divide-slate-200">
             {projects.map((project) => (
