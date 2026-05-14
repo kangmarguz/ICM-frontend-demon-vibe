@@ -289,7 +289,7 @@ type Role = 'USER' | 'GUEST' | 'ADMIN';
 ### ProjectStatus
 
 ```ts
-type ProjectStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+type ProjectStatus = 'PENDING' | 'PROGRESS' | 'COMPLETED' | 'CANCELLED';
 ```
 
 ### ImageType

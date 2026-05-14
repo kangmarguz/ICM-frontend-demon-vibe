@@ -19,7 +19,7 @@ import type { ImageType, Project } from '../types/project';
 const editProjectSchema = z.object({
   title: z.string().trim().min(1, 'Project title is required'),
   description: z.string().trim().optional(),
-  status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
+  status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCELLED']),
   isActive: z.boolean(),
 });
 

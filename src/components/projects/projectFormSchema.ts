@@ -25,7 +25,7 @@ export type CreateProjectFormPayload = {
   }>;
 };
 
-export const projectStatuses: ProjectStatus[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+export const projectStatuses: ProjectStatus[] = ['PENDING', 'PROGRESS', 'COMPLETED', 'CANCELLED'];
 
 export const imageFields: ProjectImageField[] = [
   {
@@ -48,7 +48,7 @@ export const imageFields: ProjectImageField[] = [
 export const projectSchema = z.object({
   title: z.string().trim().min(1, 'Project title is required'),
   description: z.string().trim().optional(),
-  status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
+  status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCELLED']),
   isActive: z.boolean(),
 });
 
