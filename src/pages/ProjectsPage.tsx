@@ -1,6 +1,6 @@
-import { Plus } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProjectList } from '../components/projects/ProjectList';
 import { useLoadProjects } from '../hooks/useLoadProjects';
@@ -10,8 +10,30 @@ import { getVisibleProjects, useProjectStore } from '../stores/projectStore';
 export function ProjectsPage() {
   const user = useAuthStore((state) => state.user)!;
   const allProjects = useProjectStore((state) => state.projects);
+  const [searchTerm, setSearchTerm] = useState('');
   const { isLoadingProjects, loadProjects, loadProjectsError } = useLoadProjects(user);
   const projects = useMemo(() => getVisibleProjects(allProjects, user), [allProjects, user]);
+  const showActiveState = user.role !== 'USER';
+  const filteredProjects = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    if (!query) {
+      return projects;
+    }
+
+    return projects.filter((project) => {
+      const searchableText = [
+        project.title,
+        project.description ?? '',
+        project.status,
+        showActiveState ? (project.isActive ? 'active' : 'inactive') : '',
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return searchableText.includes(query);
+    });
+  }, [projects, searchTerm, showActiveState]);
   const canCreate = user.role === 'USER' || user.role === 'ADMIN';
 
   useEffect(() => {
@@ -50,7 +72,38 @@ export function ProjectsPage() {
         ) : null}
       </motion.div>
 
-      <ProjectList errorMessage={loadProjectsError} isLoading={isLoadingProjects} projects={projects} />
+      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+        <label className="relative block">
+          <span className="sr-only">Search projects</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search projects"
+            className="h-11 w-full rounded border border-slate-200 bg-white pl-10 pr-10 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-sky-500"
+          />
+          {searchTerm ? (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              aria-label="Clear search"
+              title="Clear search"
+              className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+            >
+              <X size={16} />
+            </button>
+          ) : null}
+        </label>
+      </div>
+
+      <ProjectList
+        emptyMessage={searchTerm.trim() ? 'No matching projects.' : 'No projects yet.'}
+        errorMessage={loadProjectsError}
+        isLoading={isLoadingProjects}
+        projects={filteredProjects}
+        showActiveState={showActiveState}
+      />
     </motion.div>
   );
 }

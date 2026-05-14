@@ -30,10 +30,7 @@ export function HomePage() {
   const { isLoadingProjects, loadProjects, loadProjectsError } = useLoadProjects(user);
   const projects = useMemo(() => getVisibleProjects(allProjects, user), [allProjects, user]);
   const activeProjects = useMemo(() => projects.filter((project) => project.isActive), [projects]);
-  const imageCount = useMemo(
-    () => projects.reduce((total, project) => total + project.images.length, 0),
-    [projects],
-  );
+  const showActiveState = user.role !== 'USER';
   const RoleIcon = roleContent[user.role].icon;
 
   useEffect(() => {
@@ -56,15 +53,9 @@ export function HomePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
-            <p className="text-sm text-slate-500">Visible projects</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{projects.length}</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
-            <p className="text-sm text-slate-500">Images</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{imageCount}</p>
-          </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5">
+          <p className="text-sm text-slate-500">Visible projects</p>
+          <p className="mt-2 text-3xl font-semibold text-slate-950">{projects.length}</p>
         </div>
       </section>
 
@@ -72,7 +63,11 @@ export function HomePage() {
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h3 className="font-semibold text-slate-950">Recent projects</h3>
-            <p className="text-sm text-slate-500">{activeProjects.length} active projects in your visible workspace</p>
+            <p className="text-sm text-slate-500">
+              {showActiveState
+                ? `${activeProjects.length} active projects in your visible workspace`
+                : `${projects.length} projects in your workspace`}
+            </p>
           </div>
           <FolderKanban className="text-slate-400" size={20} />
         </div>

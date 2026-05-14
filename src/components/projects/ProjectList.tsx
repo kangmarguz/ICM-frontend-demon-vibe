@@ -5,12 +5,20 @@ import { getProjectStatusClassName } from '../../lib/projectStatusStyles';
 import type { Project } from '../../types/project';
 
 type ProjectListProps = {
+  emptyMessage?: string;
   errorMessage?: string;
   isLoading?: boolean;
   projects: Project[];
+  showActiveState?: boolean;
 };
 
-export function ProjectList({ errorMessage, isLoading = false, projects }: ProjectListProps) {
+export function ProjectList({
+  emptyMessage = 'No projects yet.',
+  errorMessage,
+  isLoading = false,
+  projects,
+  showActiveState = true,
+}: ProjectListProps) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 14 }}
@@ -28,7 +36,7 @@ export function ProjectList({ errorMessage, isLoading = false, projects }: Proje
       ) : errorMessage ? (
         <div className="px-6 py-10 text-sm text-rose-600">{errorMessage}</div>
       ) : projects.length === 0 ? (
-        <div className="px-6 py-10 text-sm text-slate-500">No projects yet.</div>
+        <div className="px-6 py-10 text-sm text-slate-500">{emptyMessage}</div>
       ) : (
         <div className="divide-y divide-slate-200">
           {projects.map((project) => (
@@ -56,13 +64,15 @@ export function ProjectList({ errorMessage, isLoading = false, projects }: Proje
                     <span className={`rounded px-3 py-1 text-xs font-semibold uppercase ${getProjectStatusClassName(project.status)}`}>
                       {project.status}
                     </span>
-                    <span
-                      className={`rounded px-3 py-1 text-xs font-semibold uppercase ${
-                        project.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                      }`}
-                    >
-                      {project.isActive ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
+                    {showActiveState ? (
+                      <span
+                        className={`rounded px-3 py-1 text-xs font-semibold uppercase ${
+                          project.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                        }`}
+                      >
+                        {project.isActive ? 'ACTIVE' : 'INACTIVE'}
+                      </span>
+                    ) : null}
                   </div>
                   <Link
                     to={`/projects/${project.id}`}

@@ -54,6 +54,7 @@ export function ProjectDetailPage() {
   });
   const canEdit = user.role === 'ADMIN' || project?.createdById === user.id;
   const showProjectControls = user.role !== 'USER';
+  const showActiveState = user.role !== 'USER';
 
   const {
     register,
@@ -499,13 +500,15 @@ export function ProjectDetailPage() {
                   <span className={`rounded px-3 py-1 text-xs font-semibold uppercase ${getProjectStatusClassName(project.status)}`}>
                     {project.status}
                   </span>
-                  <span
-                    className={`rounded px-3 py-1 text-xs font-semibold uppercase ${
-                      project.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                    }`}
-                  >
-                    {project.isActive ? 'ACTIVE' : 'INACTIVE'}
-                  </span>
+                  {showActiveState ? (
+                    <span
+                      className={`rounded px-3 py-1 text-xs font-semibold uppercase ${
+                        project.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                      }`}
+                    >
+                      {project.isActive ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                  ) : null}
                 </div>
 
                 {!canEdit ? <p className="text-sm text-slate-500">You can view this project but cannot edit it.</p> : null}
