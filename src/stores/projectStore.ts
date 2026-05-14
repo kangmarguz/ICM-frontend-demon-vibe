@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import type { AppUser } from '../types/auth';
-import type { Project, ProjectImage, ProjectStatus } from '../types/project';
+import type { ImageType, Project, ProjectImage, ProjectStatus } from '../types/project';
 
 type CreateProjectImageInput = {
   name: string;
   url: string;
   publicId?: string | null;
+  type: ImageType;
 };
 
 type CreateProjectInput = {
@@ -45,7 +46,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
         name: image.name,
         url: image.url,
         publicId: image.publicId ?? null,
-        type: 'PROJECT',
+        type: image.type,
         createdAt: now,
         updatedAt: now,
         projectId: projectId,

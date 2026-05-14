@@ -1,5 +1,5 @@
 export type ProjectStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-export type ImageType = 'PROJECT';
+export type ImageType = 'IMAGE_2D' | 'IMAGE_3D' | 'PAY_SLIP';
 
 export type ProjectImage = {
   id: string;
