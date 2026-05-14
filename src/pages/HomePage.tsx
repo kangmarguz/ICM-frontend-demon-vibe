@@ -1,6 +1,7 @@
 import { FolderKanban, ShieldCheck, UserRound, UsersRound } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useLoadProjects } from '../hooks/useLoadProjects';
+import { getProjectStatusClassName } from '../lib/projectStatusStyles';
 import { useAuthStore } from '../stores/authStore';
 import { getVisibleProjects, useProjectStore } from '../stores/projectStore';
 import type { Role } from '../types/auth';
@@ -88,7 +89,7 @@ export function HomePage() {
                   <p className="font-medium text-slate-950">{project.title}</p>
                   {project.description ? <p className="mt-1 text-sm text-slate-500">{project.description}</p> : null}
                 </div>
-                <span className="w-fit rounded bg-slate-100 px-3 py-1 text-xs font-semibold uppercase text-slate-600">
+                <span className={`w-fit rounded px-3 py-1 text-xs font-semibold uppercase ${getProjectStatusClassName(project.status)}`}>
                   {project.status}
                 </span>
               </div>

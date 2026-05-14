@@ -1,6 +1,7 @@
 import { ImageIcon, Settings } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
+import { getProjectStatusClassName } from '../../lib/projectStatusStyles';
 import type { Project } from '../../types/project';
 
 type ProjectListProps = {
@@ -50,17 +51,9 @@ export function ProjectList({ errorMessage, isLoading = false, projects }: Proje
                   </div>
                 </Link>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link
-                    to={`/projects/${project.id}`}
-                    aria-label={`Edit ${project.title}`}
-                    title="Edit project"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
-                  >
-                    <Settings size={16} />
-                  </Link>
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <div className="flex flex-wrap gap-2">
-                    <span className="rounded bg-sky-50 px-3 py-1 text-xs font-semibold uppercase text-sky-700">
+                    <span className={`rounded px-3 py-1 text-xs font-semibold uppercase ${getProjectStatusClassName(project.status)}`}>
                       {project.status}
                     </span>
                     <span
@@ -71,6 +64,14 @@ export function ProjectList({ errorMessage, isLoading = false, projects }: Proje
                       {project.isActive ? 'ACTIVE' : 'INACTIVE'}
                     </span>
                   </div>
+                  <Link
+                    to={`/projects/${project.id}`}
+                    aria-label={`Edit ${project.title}`}
+                    title="Edit project"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  >
+                    <Settings size={16} />
+                  </Link>
                 </div>
               </div>
 

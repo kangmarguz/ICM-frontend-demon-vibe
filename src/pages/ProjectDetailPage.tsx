@@ -9,6 +9,7 @@ import { Link, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { ProjectFileField } from '../components/projects/ProjectFileField';
 import { imageFields, type PendingImage, projectStatuses } from '../components/projects/projectFormSchema';
+import { getProjectStatusClassName } from '../lib/projectStatusStyles';
 import { resizeImageToBase64 } from '../lib/resizeImageToBase64';
 import { getProjectById, updateProject } from '../services/projectApi';
 import { deleteFromCloudinary, uploadToCloudinary } from '../services/uploadApi';
@@ -19,7 +20,7 @@ import type { ImageType, Project } from '../types/project';
 const editProjectSchema = z.object({
   title: z.string().trim().min(1, 'Project title is required'),
   description: z.string().trim().optional(),
-  status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCELLED']),
+  status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCEL']),
   isActive: z.boolean(),
 });
 
@@ -388,7 +389,7 @@ export function ProjectDetailPage() {
             className="rounded-lg border border-slate-200 bg-white p-5"
           >
             <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-slate-950">{isEditing ? 'Edit project' : project.title}</h3>
                 <p className="mt-1 text-sm text-slate-500">
                   {isEditing ? 'Update project information and manage uploaded images.' : 'Project information is read-only until you open edit mode.'}
@@ -403,7 +404,7 @@ export function ProjectDetailPage() {
                     disabled={isSubmitting || isUploadingImages}
                     aria-label="Cancel editing"
                     title="Cancel editing"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="ml-auto inline-flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <X size={18} />
                   </button>
@@ -413,7 +414,7 @@ export function ProjectDetailPage() {
                     onClick={handleStartEditing}
                     aria-label="Edit project"
                     title="Edit project"
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    className="ml-auto inline-flex h-10 w-10 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
                   >
                     <Settings size={18} />
                   </button>
@@ -495,7 +496,7 @@ export function ProjectDetailPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded bg-sky-50 px-3 py-1 text-xs font-semibold uppercase text-sky-700">
+                  <span className={`rounded px-3 py-1 text-xs font-semibold uppercase ${getProjectStatusClassName(project.status)}`}>
                     {project.status}
                   </span>
                   <span
