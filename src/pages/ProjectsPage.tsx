@@ -40,11 +40,7 @@ export function ProjectsPage() {
 
       const uploadedImages = await Promise.all(
         payload.images.map(async (image) => {
-          const base64 = await resizeImageToBase64(image.file, {
-            maxHeight: 720,
-            maxWidth: 720,
-            quality: 0.8,
-          });
+          const base64 = await resizeImageToBase64(image.file);
 
           const uploadedImage = await uploadToCloudinary({
             name: image.name,
