@@ -22,6 +22,7 @@ type ProjectState = {
   projects: Project[];
   actionAddProject: (project: Project) => void;
   actionSetProjects: (projects: Project[]) => void;
+  actionUpdateProject: (project: Project) => void;
   createProject: (input: CreateProjectInput) => void;
 };
 
@@ -47,6 +48,10 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set({
       projects: projects,
     }),
+  actionUpdateProject: (project) =>
+    set((state) => ({
+      projects: state.projects.map((item) => (item.id === project.id ? project : item)),
+    })),
   createProject: (input) =>
     set((state) => {
       const now = new Date().toISOString();

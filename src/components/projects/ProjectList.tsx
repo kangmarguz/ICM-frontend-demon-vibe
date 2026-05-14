@@ -1,5 +1,6 @@
 import { ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 import type { Project } from '../../types/project';
 
 type ProjectListProps = {
@@ -39,7 +40,8 @@ export function ProjectList({ errorMessage, isLoading = false, projects }: Proje
               whileHover={{ y: -2, boxShadow: '0 12px 30px rgb(15 23 42 / 0.08)' }}
               className="px-6 py-5"
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <Link to={`/projects/${project.id}`} className="block">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold text-slate-950">{project.title}</h3>
                   {project.description ? (
@@ -55,6 +57,7 @@ export function ProjectList({ errorMessage, isLoading = false, projects }: Proje
                   </span>
                 </div>
               </div>
+              </Link>
 
               {project.images.length > 0 ? (
                 <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-4">

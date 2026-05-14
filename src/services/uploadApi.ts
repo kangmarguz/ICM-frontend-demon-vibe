@@ -21,3 +21,11 @@ export async function uploadToCloudinary(payload: UploadCloudinaryRequest) {
   const response = await apiClient.post<UploadApiResponse>('/uploads/cloudinary', payload);
   return response.data.asset;
 }
+
+export async function deleteFromCloudinary(publicId: string) {
+  await apiClient.delete('/uploads/cloudinary', {
+    data: {
+      publicId: publicId,
+    },
+  });
+}

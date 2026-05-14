@@ -27,6 +27,24 @@ export type CreateProjectFormPayload = {
 
 export const projectStatuses: ProjectStatus[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
 
+export const imageFields: ProjectImageField[] = [
+  {
+    type: 'IMAGE_2D',
+    title: '2D images',
+    description: 'Upload plan, drawing, or flat reference images.',
+  },
+  {
+    type: 'IMAGE_3D',
+    title: '3D images',
+    description: 'Upload 3D preview, render, or model reference images.',
+  },
+  {
+    type: 'PAY_SLIP',
+    title: 'Pay slip',
+    description: 'Upload payment slip or payment evidence.',
+  },
+];
+
 export const projectSchema = z.object({
   title: z.string().trim().min(1, 'Project title is required'),
   description: z.string().trim().optional(),

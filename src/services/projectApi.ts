@@ -14,9 +14,24 @@ export type CreateProjectRequest = {
   }>;
 };
 
+export type UpdateProjectRequest = {
+  title: string;
+  description?: string;
+  status: ProjectStatus;
+  isActive: boolean;
+  images?: Array<{
+    name: string;
+    url: string;
+    publicId?: string | null;
+    type: ImageType;
+  }>;
+};
+
 type CreateProjectApiResponse = Project | {
   data: Project;
 };
+
+type ProjectDetailApiResponse = unknown;
 
 type ProjectApiResponse = Project & {
   createdBy?: unknown;
@@ -35,6 +50,14 @@ function normalizeCreateProjectResponse(response: CreateProjectApiResponse) {
   return response;
 }
 
+function normalizeProjectResponse(response: ProjectDetailApiResponse) {
+  const payload = asRecord(response);
+  const data = asRecord(payload.data);
+  const project = payload.project ?? payload.data ?? data.project ?? response;
+
+  return normalizeProject(project as ProjectApiResponse);
+}
+
 function normalizeProjectsResponse(response: GetProjectsApiResponse) {
   const payload = asRecord(response);
   const data = asRecord(payload.data);
@@ -51,6 +74,16 @@ function normalizeProjectsResponse(response: GetProjectsApiResponse) {
 export async function createProject(payload: CreateProjectRequest) {
   const response = await apiClient.post<CreateProjectApiResponse>('/projects', payload);
   return normalizeCreateProjectResponse(response.data);
+}
+
+export async function getProjectById(projectId: string) {
+  const response = await apiClient.get<ProjectDetailApiResponse>(`/projects/${projectId}`);
+  return normalizeProjectResponse(response.data);
+}
+
+export async function updateProject(projectId: string, payload: UpdateProjectRequest) {
+  const response = await apiClient.patch<ProjectDetailApiResponse>(`/projects/${projectId}`, payload);
+  return normalizeProjectResponse(response.data);
 }
 
 export async function getProjects() {

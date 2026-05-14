@@ -10,28 +10,10 @@ import {
   type CreateProjectFormPayload,
   type PendingImage,
   type ProjectFormData,
-  type ProjectImageField,
+  imageFields,
   projectSchema,
   projectStatuses,
 } from './projectFormSchema';
-
-const imageFields: ProjectImageField[] = [
-  {
-    type: 'IMAGE_2D',
-    title: '2D images',
-    description: 'Upload plan, drawing, or flat reference images.',
-  },
-  {
-    type: 'IMAGE_3D',
-    title: '3D images',
-    description: 'Upload 3D preview, render, or model reference images.',
-  },
-  {
-    type: 'PAY_SLIP',
-    title: 'Pay slip',
-    description: 'Upload payment slip or payment evidence.',
-  },
-];
 
 type ProjectFormProps = {
   canCreate: boolean;
