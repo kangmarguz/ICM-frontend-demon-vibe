@@ -5,9 +5,9 @@ type ResizeImageOptions = {
 };
 
 const DEFAULT_OPTIONS: Required<ResizeImageOptions> = {
-  maxHeight: 720,
-  maxWidth: 720,
-  quality: 0.8,
+  maxHeight: 512,
+  maxWidth: 512,
+  quality: 0.65,
 };
 
 export function resizeImageToBase64(file: File, options: ResizeImageOptions = {}) {
