@@ -20,6 +20,13 @@ import type { ImageType, Project } from '../types/project';
 const editProjectSchema = z.object({
   title: z.string().trim().min(1, 'Project title is required'),
   description: z.string().trim().optional(),
+  urlLink: z
+    .string()
+    .trim()
+    .refine((value) => value.length === 0 || z.string().url().safeParse(value).success, {
+      message: 'URL link must be a valid URL',
+    })
+    .optional(),
   status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCEL']),
   isActive: z.boolean(),
 });
@@ -66,6 +73,7 @@ export function ProjectDetailPage() {
     defaultValues: {
       title: '',
       description: '',
+      urlLink: '',
       status: 'PENDING',
       isActive: true,
     },
@@ -90,6 +98,7 @@ export function ProjectDetailPage() {
           reset({
             title: nextProject.title,
             description: nextProject.description ?? '',
+            urlLink: nextProject.urlLink ?? '',
             status: nextProject.status,
             isActive: nextProject.isActive,
           });
@@ -125,6 +134,7 @@ export function ProjectDetailPage() {
     reset({
       title: project.title,
       description: project.description ?? '',
+      urlLink: project.urlLink ?? '',
       status: project.status,
       isActive: project.isActive,
     });
@@ -216,6 +226,7 @@ export function ProjectDetailPage() {
       reset({
         title: project.title,
         description: project.description ?? '',
+        urlLink: project.urlLink ?? '',
         status: project.status,
         isActive: project.isActive,
       });
@@ -240,6 +251,7 @@ export function ProjectDetailPage() {
       const updatedProject = await updateProject(projectId, {
         title: data.title,
         description: data.description ?? '',
+        urlLink: data.urlLink ?? '',
         status: showProjectControls ? data.status : 'PENDING',
         isActive: showProjectControls ? data.isActive : true,
       });
@@ -302,6 +314,7 @@ export function ProjectDetailPage() {
       const updatedProject = await updateProject(projectId, {
         title: project.title,
         description: project.description ?? '',
+        urlLink: project.urlLink ?? '',
         status: showProjectControls ? project.status : 'PENDING',
         isActive: showProjectControls ? project.isActive : true,
         images: uploadedImages,
@@ -444,6 +457,18 @@ export function ProjectDetailPage() {
                   />
                 </label>
 
+                <label className="block">
+                  <span className="text-sm font-medium text-slate-700">URL link</span>
+                  <input
+                    {...register('urlLink')}
+                    type="url"
+                    disabled={!canEdit || isSubmitting}
+                    className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+                    placeholder="https://example.com/project"
+                  />
+                  {errors.urlLink ? <p className="mt-1 text-sm text-rose-600">{errors.urlLink.message}</p> : null}
+                </label>
+
                 {showProjectControls ? (
                   <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
                     <label className="block">
@@ -494,6 +519,22 @@ export function ProjectDetailPage() {
                 <div>
                   <p className="text-sm font-medium text-slate-700">Description</p>
                   <p className="mt-1 text-sm leading-6 text-slate-500">{project.description || 'No description'}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-slate-700">URL link</p>
+                  {project.urlLink ? (
+                    <a
+                      href={project.urlLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 inline-block break-all text-sm font-medium text-sky-700 hover:text-sky-800"
+                    >
+                      {project.urlLink}
+                    </a>
+                  ) : (
+                    <p className="mt-1 text-sm text-slate-500">No URL link</p>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
