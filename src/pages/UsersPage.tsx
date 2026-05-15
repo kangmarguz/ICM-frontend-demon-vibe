@@ -15,7 +15,7 @@ const createUserSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   email: z.string().trim().email('Email format is invalid'),
   role: z.enum(['USER', 'ADMIN', 'GUEST']),
-  siteId: z.string().trim().min(1, 'Site is required'),
+  siteId: z.string().trim().optional(),
 });
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;
@@ -153,7 +153,7 @@ export function UsersPage() {
         name: data.name,
         email: data.email,
         role: data.role,
-        siteId: data.siteId,
+        siteId: data.siteId?.trim() || undefined,
       });
 
       reset();
@@ -301,7 +301,7 @@ export function UsersPage() {
                 disabled={isSubmitting}
                 className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
               >
-                <option value="">Select site</option>
+                <option value="">No site</option>
                 {sites.map((site) => (
                   <option key={site.id} value={site.id}>
                     {site.name}
