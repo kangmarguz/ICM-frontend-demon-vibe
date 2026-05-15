@@ -1,10 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AxiosError } from 'axios';
-import { Save, Settings, UserRound } from 'lucide-react';
+import { LoaderCircle, Save, Settings, UserRound } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { getApiErrorMessage, toastAsync } from '../lib/toast';
 import { updateUser } from '../services/authApi';
 import { useAuthStore } from '../stores/authStore';
 
@@ -34,10 +34,6 @@ const createSettingsSchema = (forceResetPassword: boolean) =>
   });
 
 type SettingsFormData = z.infer<ReturnType<typeof createSettingsSchema>>;
-
-type ApiErrorResponse = {
-  message?: string;
-};
 
 export function SettingsPage() {
   const user = useAuthStore((state) => state.user)!;
@@ -76,13 +72,21 @@ export function SettingsPage() {
       setSaveSuccess('');
       const oldPassword = forceResetPassword ? DEFAULT_RESET_PASSWORD : data.oldPassword;
 
-      const updatedUser = await updateUser(
-        user.id,
+      const updatedUser = await toastAsync(
+        () =>
+          updateUser(
+            user.id,
+            {
+              name: data.name,
+              ...(data.password ? { oldPassword, newPassword: data.password } : {}),
+            },
+            user,
+          ),
         {
-          name: data.name,
-          ...(data.password ? { oldPassword, newPassword: data.password } : {}),
+          pending: 'Saving settings...',
+          success: 'Settings updated.',
+          error: 'Cannot update settings.',
         },
-        user,
       );
 
       actionSetUser(updatedUser);
@@ -94,12 +98,7 @@ export function SettingsPage() {
       });
       setSaveSuccess('Settings updated.');
     } catch (error) {
-      const message =
-        error instanceof AxiosError
-          ? (error.response?.data as ApiErrorResponse | undefined)?.message
-          : undefined;
-
-      setSaveError(message ?? 'Cannot update settings.');
+      setSaveError(getApiErrorMessage(error, 'Cannot update settings.'));
       throw error;
     }
   };
@@ -225,7 +224,7 @@ export function SettingsPage() {
             whileTap={isSubmitting ? undefined : { scale: 0.99 }}
             className="inline-flex items-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            <Save size={16} />
+            {isSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <Save size={16} />}
             {isSubmitting ? 'Saving...' : 'Save settings'}
           </motion.button>
 

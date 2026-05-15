@@ -8,6 +8,7 @@ import { z } from 'zod';
 import type { EditProjectFormData } from '../components/projects/detail/ProjectEditForm';
 import { imageFields, type PendingImage } from '../components/projects/projectFormSchema';
 import { resizeImageToBase64 } from '../lib/resizeImageToBase64';
+import { toastAsync } from '../lib/toast';
 import { getProjectById, updateProject } from '../services/projectApi';
 import { deleteFromCloudinary, uploadToCloudinary } from '../services/uploadApi';
 import { useAuthStore } from '../stores/authStore';
@@ -239,12 +240,20 @@ export function useProjectDetailController() {
     try {
       setSaveError('');
       setSaveSuccess('');
-      const updatedProject = await updateProject(projectId, {
-        title: data.title,
-        description: data.description ?? '',
-        urlLink: data.urlLink ?? '',
-        ...(showProjectControls ? { status: data.status, isActive: data.isActive } : {}),
-      });
+      const updatedProject = await toastAsync(
+        () =>
+          updateProject(projectId, {
+            title: data.title,
+            description: data.description ?? '',
+            urlLink: data.urlLink ?? '',
+            ...(showProjectControls ? { status: data.status, isActive: data.isActive } : {}),
+          }),
+        {
+          pending: 'Updating project...',
+          success: 'Project updated.',
+          error: 'Cannot update project.',
+        },
+      );
 
       setProject(updatedProject);
       actionUpdateProject(updatedProject);
@@ -277,46 +286,54 @@ export function useProjectDetailController() {
       setImageError('');
       setImageSuccess('');
       setIsUploadingImages(true);
+      const updatedProject = await toastAsync(
+        async () => {
+          const uploadedImages = await Promise.all(
+            imagesToUpload.map(async (image) => {
+              const base64 = await resizeImageToBase64(image.file);
+              const uploadedImage = await uploadToCloudinary({
+                name: image.name,
+                file: base64,
+                type: image.type,
+              });
 
-      const uploadedImages = await Promise.all(
-        imagesToUpload.map(async (image) => {
-          const base64 = await resizeImageToBase64(image.file);
-          const uploadedImage = await uploadToCloudinary({
-            name: image.name,
-            file: base64,
-            type: image.type,
+              return {
+                name: uploadedImage.name,
+                url: uploadedImage.url,
+                publicId: uploadedImage.publicId ?? null,
+                type: image.type,
+              };
+            }),
+          );
+
+          const uploadedTypes = new Set(uploadedImages.map((image) => image.type));
+          const imagesForUpdate = [
+            ...project.images
+              .filter((image) => {
+                if (!uploadedTypes.has(image.type)) {
+                  return false;
+                }
+
+                return image.type !== 'PAY_SLIP';
+              })
+              .map(toImagePayload),
+            ...uploadedImages,
+          ];
+
+          return updateProject(projectId, {
+            title: project.title,
+            description: project.description ?? '',
+            urlLink: project.urlLink ?? '',
+            images: imagesForUpdate,
+            ...(showProjectControls ? { status: project.status, isActive: project.isActive } : {}),
           });
-
-          return {
-            name: uploadedImage.name,
-            url: uploadedImage.url,
-            publicId: uploadedImage.publicId ?? null,
-            type: image.type,
-          };
-        }),
+        },
+        {
+          pending: 'Uploading images...',
+          success: 'Images uploaded.',
+          error: 'Cannot upload images.',
+        },
       );
-
-      const uploadedTypes = new Set(uploadedImages.map((image) => image.type));
-      const imagesForUpdate = [
-        ...project.images
-          .filter((image) => {
-            if (!uploadedTypes.has(image.type)) {
-              return false;
-            }
-
-            return image.type !== 'PAY_SLIP';
-          })
-          .map(toImagePayload),
-        ...uploadedImages,
-      ];
-
-      const updatedProject = await updateProject(projectId, {
-        title: project.title,
-        description: project.description ?? '',
-        urlLink: project.urlLink ?? '',
-        images: imagesForUpdate,
-        ...(showProjectControls ? { status: project.status, isActive: project.isActive } : {}),
-      });
 
       setProject(updatedProject);
       actionUpdateProject(updatedProject);
@@ -339,7 +356,14 @@ export function useProjectDetailController() {
       setImageError('');
       setImageSuccess('');
       setDeletingPublicId(publicId);
-      await deleteFromCloudinary(publicId);
+      await toastAsync(
+        () => deleteFromCloudinary(publicId),
+        {
+          pending: 'Deleting image...',
+          success: 'Image deleted.',
+          error: 'Cannot delete image.',
+        },
+      );
 
       const updatedProject = {
         ...project,

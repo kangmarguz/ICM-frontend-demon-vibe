@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus } from 'lucide-react';
+import { LoaderCircle, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRef, useState } from 'react';
@@ -289,7 +289,7 @@ export function ProjectForm({
           whileTap={!canCreate || isSubmitting ? undefined : { scale: 0.99 }}
           className="flex w-full items-center justify-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-100 hover:bg-sky-700 hover:shadow-md hover:shadow-sky-100 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-          <Plus size={16} />
+          {isSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <Plus size={16} />}
           {isSubmitting ? 'Creating project...' : 'Create project'}
         </motion.button>
 

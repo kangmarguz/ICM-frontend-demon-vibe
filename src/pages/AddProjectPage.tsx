@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
@@ -6,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ProjectForm } from '../components/projects/ProjectForm';
 import type { CreateProjectFormPayload } from '../components/projects/projectFormSchema';
 import { resizeImageToBase64 } from '../lib/resizeImageToBase64';
+import { getApiErrorMessage, toastAsync } from '../lib/toast';
 import { fetchSites } from '../services/siteApi';
 import { createProject as createProjectApi } from '../services/projectApi';
 import { uploadToCloudinary } from '../services/uploadApi';
@@ -13,10 +13,6 @@ import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import type { Project } from '../types/project';
 import type { Site } from '../types/site';
-
-type ApiErrorResponse = {
-  message?: string;
-};
 
 export function AddProjectPage() {
   const user = useAuthStore((state) => state.user)!;
@@ -69,44 +65,47 @@ export function AddProjectPage() {
   const handleCreateProject = async (payload: CreateProjectFormPayload) => {
     try {
       setCreateError('');
+      const createdProject = await toastAsync(
+        async () => {
+          const uploadedImages = await Promise.all(
+            payload.images.map(async (image) => {
+              const base64 = await resizeImageToBase64(image.file);
+              const uploadedImage = await uploadToCloudinary({
+                name: image.name,
+                file: base64,
+                type: image.type,
+              });
 
-      const uploadedImages = await Promise.all(
-        payload.images.map(async (image) => {
-          const base64 = await resizeImageToBase64(image.file);
-          const uploadedImage = await uploadToCloudinary({
-            name: image.name,
-            file: base64,
-            type: image.type,
+              return {
+                name: uploadedImage.name,
+                url: uploadedImage.url,
+                publicId: uploadedImage.publicId ?? null,
+                type: image.type,
+              };
+            }),
+          );
+
+          return createProjectApi({
+            title: payload.title,
+            description: payload.description,
+            urlLink: payload.urlLink,
+            siteId: payload.siteId,
+            status: payload.status,
+            isActive: payload.isActive,
+            images: uploadedImages,
           });
-
-          return {
-            name: uploadedImage.name,
-            url: uploadedImage.url,
-            publicId: uploadedImage.publicId ?? null,
-            type: image.type,
-          };
-        }),
+        },
+        {
+          pending: 'Creating project...',
+          success: 'Project created successfully.',
+          error: 'Cannot create project. Please check project data and uploaded files.',
+        },
       );
-
-      const createdProject = await createProjectApi({
-        title: payload.title,
-        description: payload.description,
-        urlLink: payload.urlLink,
-        siteId: payload.siteId,
-        status: payload.status,
-        isActive: payload.isActive,
-        images: uploadedImages,
-      });
 
       actionAddProject(normalizeProjectForClient(createdProject, user.id));
       navigate('/projects', { replace: true });
     } catch (error) {
-      const message =
-        error instanceof AxiosError
-          ? (error.response?.data as ApiErrorResponse | undefined)?.message
-          : undefined;
-
-      setCreateError(message ?? 'Cannot create project. Please check project data and uploaded files.');
+      setCreateError(getApiErrorMessage(error, 'Cannot create project. Please check project data and uploaded files.'));
       throw error;
     }
   };

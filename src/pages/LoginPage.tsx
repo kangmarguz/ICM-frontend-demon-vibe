@@ -1,17 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AxiosError } from 'axios';
-import { Eye, EyeOff, KeyRound, LockKeyhole, Mail } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, LoaderCircle, LockKeyhole, Mail } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { getApiErrorMessage, toastAsync } from '../lib/toast';
 import { login } from '../services/authApi';
 import { useAuthStore } from '../stores/authStore';
 
 const loginSchema = z.object({
-  email: z.string().trim().min(1, 'กรอก email').email('รูปแบบ email ไม่ถูกต้อง'),
-  password: z.string().min(8, 'password อย่างน้อย 8 ตัวอักษร'),
+  email: z.string().trim().min(1, 'Email is required').email('Email format is invalid'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -20,10 +20,6 @@ type LocationState = {
   from?: {
     pathname?: string;
   };
-};
-
-type ApiErrorResponse = {
-  message?: string;
 };
 
 export function LoginPage() {
@@ -54,19 +50,23 @@ export function LoginPage() {
   const handleLogin = async (data: LoginFormData) => {
     try {
       setAuthError('');
-      const session = await login({
-        email: data.email.trim(),
-        password: data.password,
-      });
+      const session = await toastAsync(
+        () =>
+          login({
+            email: data.email.trim(),
+            password: data.password,
+          }),
+        {
+          pending: 'Signing in...',
+          success: 'Logged in successfully.',
+          error: 'Cannot log in. Please check your credentials.',
+        },
+      );
+
       actionSetSession(session);
       navigate(from, { replace: true });
     } catch (error) {
-      const message =
-        error instanceof AxiosError
-          ? (error.response?.data as ApiErrorResponse | undefined)?.message
-          : undefined;
-
-      setAuthError(message ?? 'ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบข้อมูลอีกครั้ง');
+      setAuthError(getApiErrorMessage(error, 'Unable to log in. Please verify your credentials.'));
     }
   };
 
@@ -98,14 +98,14 @@ export function LoginPage() {
             <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Protected workspace</p>
             <h1 className="mt-3 text-3xl font-semibold leading-tight text-slate-950">Project Task Manager</h1>
             <p className="mt-4 text-sm leading-6 text-slate-600">
-              เข้าสู่ระบบด้วยบัญชีจริงจาก backend ก่อนใช้งาน workspace และ route ภายในทั้งหมด
+              Sign in with your backend account before using the workspace and protected routes.
             </p>
           </div>
 
           <div className="rounded border border-sky-200 bg-white/70 p-4">
             <p className="text-sm font-semibold text-slate-950">Secure access</p>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              ระบบจะตรวจสอบบัญชีก่อนเปิด workspace สำหรับ project, task และ permission ของแต่ละ role
+              The system verifies your account before opening the workspace for projects, tasks, and role-based access.
             </p>
           </div>
         </motion.div>
@@ -119,7 +119,7 @@ export function LoginPage() {
           <div className="w-full">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-slate-950">Sign in</h2>
-              <p className="mt-1 text-sm text-slate-500">กรอก email และ password เพื่อเข้า dashboard</p>
+              <p className="mt-1 text-sm text-slate-500">Enter your email and password to access the dashboard.</p>
             </div>
 
             <form onSubmit={handleSubmit(handleLogin)} className="space-y-4">
@@ -176,7 +176,7 @@ export function LoginPage() {
                 whileTap={isSubmitting ? undefined : { scale: 0.99 }}
                 className="flex w-full items-center justify-center gap-2 rounded bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-sky-300"
               >
-                <LockKeyhole size={16} />
+                {isSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <LockKeyhole size={16} />}
                 {isSubmitting ? 'Logging in...' : 'Login'}
               </motion.button>
             </form>

@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
-import { Edit3, MapPin, Plus, RefreshCw, Search, X } from 'lucide-react';
+import { Edit3, LoaderCircle, MapPin, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { toastAsync } from '../lib/toast';
 import { createSite, fetchSites, updateSite } from '../services/siteApi';
 import type { Site } from '../types/site';
 
@@ -114,10 +115,24 @@ export function SitesPage() {
       setSuccess('');
 
       if (editingSite) {
-        await updateSite(editingSite.id, data);
+        await toastAsync(
+          () => updateSite(editingSite.id, data),
+          {
+            pending: 'Updating site...',
+            success: 'Site updated.',
+            error: 'Cannot save site.',
+          },
+        );
         setSuccess('Site updated.');
       } else {
-        await createSite(data);
+        await toastAsync(
+          () => createSite(data),
+          {
+            pending: 'Creating site...',
+            success: 'Site created.',
+            error: 'Cannot save site.',
+          },
+        );
         setSuccess('Site created.');
       }
 
@@ -134,7 +149,14 @@ export function SitesPage() {
       setError('');
       setSuccess('');
       setPendingSiteId(site.id);
-      const updatedSite = await updateSite(site.id, { isActive: !site.isActive });
+      const updatedSite = await toastAsync(
+        () => updateSite(site.id, { isActive: !site.isActive }),
+        {
+          pending: 'Updating site status...',
+          success: (response) => `${response?.name ?? 'Site'} is now ${response?.isActive ? 'active' : 'inactive'}.`,
+          error: 'Cannot update site status.',
+        },
+      );
 
       if (updatedSite) {
         setSuccess(`${updatedSite.name} is now ${updatedSite.isActive ? 'active' : 'inactive'}.`);
@@ -214,7 +236,7 @@ export function SitesPage() {
                 disabled={isSubmitting}
                 className="inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                {editingSite ? <Edit3 size={16} /> : <Plus size={16} />}
+                {isSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : editingSite ? <Edit3 size={16} /> : <Plus size={16} />}
                 {isSubmitting ? 'Saving...' : editingSite ? 'Update' : 'Create'}
               </button>
               <button

@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
-import { KeyRound, Plus, RefreshCw, Search, ShieldCheck, UserRound, UsersRound } from 'lucide-react';
+import { KeyRound, LoaderCircle, Plus, RefreshCw, Search, ShieldCheck, UserRound, UsersRound } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { toastAsync } from '../lib/toast';
 import { fetchSites } from '../services/siteApi';
 import { createUser, fetchUsers, resetUserPassword, updateUserActive, updateUserSite } from '../services/userApi';
 import { useAuthStore } from '../stores/authStore';
@@ -149,12 +150,20 @@ export function UsersPage() {
     try {
       setError('');
       setSuccess('');
-      const result = await createUser({
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        siteId: data.siteId?.trim() || undefined,
-      });
+      const result = await toastAsync(
+        () =>
+          createUser({
+            name: data.name,
+            email: data.email,
+            role: data.role,
+            siteId: data.siteId?.trim() || undefined,
+          }),
+        {
+          pending: 'Creating user...',
+          success: (response) => `User created. Default password: ${response.defaultPassword ?? '12345678'}`,
+          error: 'Cannot create user.',
+        },
+      );
 
       reset();
       setShowCreateForm(false);
@@ -171,7 +180,14 @@ export function UsersPage() {
       setError('');
       setSuccess('');
       setPendingUserId(user.id);
-      const updatedUser = await updateUserActive(user.id, !isUserActive(user));
+      const updatedUser = await toastAsync(
+        () => updateUserActive(user.id, !isUserActive(user)),
+        {
+          pending: 'Updating user status...',
+          success: (response) => `${response?.name ?? 'User'} is now ${response?.isActive !== false ? 'active' : 'inactive'}.`,
+          error: 'Cannot update user status.',
+        },
+      );
 
       if (updatedUser) {
         setSuccess(`${updatedUser.name} is now ${isUserActive(updatedUser) ? 'active' : 'inactive'}.`);
@@ -190,7 +206,14 @@ export function UsersPage() {
       setError('');
       setSuccess('');
       setPendingUserId(user.id);
-      const updatedUser = await updateUserSite(user.id, siteId);
+      const updatedUser = await toastAsync(
+        () => updateUserSite(user.id, siteId),
+        {
+          pending: 'Updating user site...',
+          success: (response) => `${response?.name ?? 'User'} site updated.`,
+          error: 'Cannot update user site.',
+        },
+      );
 
       if (updatedUser) {
         setSuccess(`${updatedUser.name} site updated.`);
@@ -209,7 +232,14 @@ export function UsersPage() {
       setError('');
       setSuccess('');
       setPendingUserId(user.id);
-      const updatedUser = await resetUserPassword(user.id);
+      const updatedUser = await toastAsync(
+        () => resetUserPassword(user.id),
+        {
+          pending: 'Resetting password...',
+          success: (response) => `${response?.name ?? 'User'} password reset to 12345678.`,
+          error: 'Cannot reset password.',
+        },
+      );
 
       if (updatedUser) {
         setSuccess(`${updatedUser.name} password reset to 12345678.`);
@@ -317,7 +347,7 @@ export function UsersPage() {
                 disabled={isSubmitting}
                 className="inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                <Plus size={16} />
+                {isSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <Plus size={16} />}
                 {isSubmitting ? 'Creating...' : 'Create'}
               </button>
               <button
