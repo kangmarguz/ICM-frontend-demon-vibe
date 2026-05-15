@@ -69,16 +69,6 @@ export function AppLayout() {
         </nav>
 
         <div className="border-t border-slate-200 p-5">
-          <div className="mb-3 rounded border border-slate-200 bg-slate-50 p-3">
-            <p className="truncate text-sm font-semibold text-slate-950">{user?.name}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-              <span className="rounded bg-indigo-100 px-2 py-0.5 font-semibold text-indigo-700">{user?.role}</span>
-              <span className="inline-flex min-w-0 items-center gap-1 text-slate-500">
-                <Building2 size={13} />
-                <span className="truncate">{siteName}</span>
-              </span>
-            </div>
-          </div>
           <button
             type="button"
             onClick={handleLogout}
