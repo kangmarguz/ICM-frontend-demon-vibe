@@ -5,6 +5,7 @@ import type { ChangeEvent, DragEvent } from 'react';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { ImageType } from '../../types/project';
+import type { Site } from '../../types/site';
 import { ProjectFileField } from './ProjectFileField';
 import {
   type CreateProjectFormPayload,
@@ -17,9 +18,11 @@ import {
 
 type ProjectFormProps = {
   canCreate: boolean;
+  sites?: Site[];
   errorMessage?: string;
   helperText: string;
   onCreate: (payload: CreateProjectFormPayload) => Promise<void> | void;
+  showSiteControl?: boolean;
   showProjectControls?: boolean;
 };
 
@@ -29,7 +32,15 @@ const emptyPendingImages: Record<ImageType, PendingImage[]> = {
   PAY_SLIP: [],
 };
 
-export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, showProjectControls = true }: ProjectFormProps) {
+export function ProjectForm({
+  canCreate,
+  sites = [],
+  errorMessage,
+  helperText,
+  onCreate,
+  showSiteControl = false,
+  showProjectControls = true,
+}: ProjectFormProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     register,
@@ -42,6 +53,7 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, sho
       title: '',
       description: '',
       urlLink: '',
+      siteId: '',
       status: 'PENDING',
       isActive: true,
     },
@@ -109,6 +121,7 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, sho
       title: '',
       description: '',
       urlLink: '',
+      siteId: '',
       status: 'PENDING',
       isActive: true,
     });
@@ -128,6 +141,7 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, sho
       title: data.title,
       description: data.description ?? '',
       urlLink: data.urlLink ?? '',
+      siteId: data.siteId,
       status: data.status,
       isActive: data.isActive,
       images: imageFields.flatMap((field) =>
@@ -190,6 +204,24 @@ export function ProjectForm({ canCreate, errorMessage, helperText, onCreate, sho
 
         {showProjectControls ? (
           <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+            {showSiteControl ? (
+              <label className="block sm:col-span-2">
+                <span className="text-sm font-medium text-slate-700">Site</span>
+                <select
+                  {...register('siteId')}
+                  disabled={!canCreate || isSubmitting}
+                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+                >
+                  <option value="">Select site</option>
+                  {sites.map((site) => (
+                    <option key={site.id} value={site.id}>
+                      {site.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Status</span>
               <select

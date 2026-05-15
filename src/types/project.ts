@@ -19,6 +19,13 @@ export type Project = {
   urlLink?: string | null;
   status: ProjectStatus;
   isActive: boolean;
+  siteId?: string | null;
+  site?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    isActive: boolean;
+  } | null;
   createdAt: string;
   updatedAt: string;
   createdById?: string | null;

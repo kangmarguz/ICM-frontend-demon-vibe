@@ -7,7 +7,7 @@ import { ProjectsPage } from '../pages/ProjectsPage';
 import { AddProjectPage } from '../pages/AddProjectPage';
 import { ProjectDetailPage } from '../pages/ProjectDetailPage';
 import { UsersPage } from '../pages/UsersPage';
-import { CategoriesPage } from '../pages/CategoriesPage';
+import { SitesPage } from '../pages/SitesPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { useAuthStore } from '../stores/authStore';
 
@@ -38,7 +38,7 @@ export const router = createBrowserRouter([
           { path: 'projects/new', element: <AddProjectPage /> },
           { path: 'projects/:projectId', element: <ProjectDetailPage /> },
           { path: 'users', element: <AdminRoute><UsersPage /></AdminRoute> },
-          { path: 'categories', element: <AdminRoute><CategoriesPage /></AdminRoute> },
+          { path: 'sites', element: <AdminRoute><SitesPage /></AdminRoute> },
           { path: 'settings', element: <SettingsPage /> },
         ],
       },

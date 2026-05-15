@@ -6,6 +6,13 @@ export type AppUser = {
   email: string;
   role: Role;
   isActive?: boolean;
+  siteId?: string | null;
+  site?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    isActive: boolean;
+  } | null;
   ownerId?: string;
   forceResetPassword?: boolean;
 };

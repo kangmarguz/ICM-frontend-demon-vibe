@@ -32,7 +32,7 @@ export function getVisibleProjects(projects: Project[], user: AppUser) {
   }
 
   if (user.role === 'GUEST') {
-    return projects.filter((project) => project.createdById === user.ownerId);
+    return projects;
   }
 
   return projects.filter((project) => project.createdById === user.id);

@@ -17,6 +17,7 @@ export type CreateProjectFormPayload = {
   title: string;
   description?: string;
   urlLink?: string;
+  siteId?: string;
   status: ProjectStatus;
   isActive: boolean;
   images: Array<{
@@ -57,6 +58,7 @@ export const projectSchema = z.object({
     })
     .optional(),
   status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCELLED']),
+  siteId: z.string().trim().optional(),
   isActive: z.boolean(),
 });
 

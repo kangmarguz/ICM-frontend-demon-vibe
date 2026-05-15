@@ -1,20 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
-import { Edit3, Plus, RefreshCw, Search, Tags, X } from 'lucide-react';
+import { Edit3, MapPin, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { createCategory, fetchCategories, updateCategory } from '../services/categoryApi';
-import type { Category } from '../types/category';
+import { createSite, fetchSites, updateSite } from '../services/siteApi';
+import type { Site } from '../types/site';
 
-const categorySchema = z.object({
-  name: z.string().trim().min(1, 'Category name is required'),
+const siteSchema = z.object({
+  name: z.string().trim().min(1, 'Site name is required'),
   description: z.string(),
   isActive: z.boolean(),
 });
 
-type CategoryFormData = z.infer<typeof categorySchema>;
+type SiteFormData = z.infer<typeof siteSchema>;
 
 type ApiErrorResponse = {
   message?: string;
@@ -28,23 +28,23 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-export function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+export function SitesPage() {
+  const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchText, setSearchText] = useState('');
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingSite, setEditingSite] = useState<Site | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null);
+  const [pendingSiteId, setPendingSiteId] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema),
+  } = useForm<SiteFormData>({
+    resolver: zodResolver(siteSchema),
     defaultValues: {
       name: '',
       description: '',
@@ -52,132 +52,99 @@ export function CategoriesPage() {
     },
   });
 
-  const loadCategories = useCallback(
-    async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
-      try {
-        if (showLoading) {
-          setIsLoading(true);
-        }
-
-        setError('');
-        const loadedCategories = await fetchCategories();
-        setCategories(loadedCategories);
-      } catch (loadError) {
-        setError(getErrorMessage(loadError, 'Cannot load categories.'));
-      } finally {
-        if (showLoading) {
-          setIsLoading(false);
-        }
+  const loadSites = useCallback(async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
+    try {
+      if (showLoading) {
+        setIsLoading(true);
       }
-    },
-    [],
-  );
+
+      setError('');
+      const loadedSites = await fetchSites();
+      setSites(loadedSites);
+    } catch (loadError) {
+      setError(getErrorMessage(loadError, 'Cannot load sites.'));
+    } finally {
+      if (showLoading) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
+    loadSites();
+  }, [loadSites]);
 
-  const filteredCategories = useMemo(() => {
+  const filteredSites = useMemo(() => {
     const query = searchText.trim().toLowerCase();
 
     if (!query) {
-      return categories;
+      return sites;
     }
 
-    return categories.filter((category) => {
-      const searchValue = [
-        category.name,
-        category.description ?? '',
-        category.isActive ? 'active' : 'inactive',
-      ]
-        .join(' ')
-        .toLowerCase();
-
-      return searchValue.includes(query);
-    });
-  }, [categories, searchText]);
+    return sites.filter((site) =>
+      [site.name, site.description ?? '', site.isActive ? 'active' : 'inactive'].join(' ').toLowerCase().includes(query),
+    );
+  }, [searchText, sites]);
 
   const openCreateForm = () => {
     setError('');
     setSuccess('');
-    setEditingCategory(null);
-    reset({
-      name: '',
-      description: '',
-      isActive: true,
-    });
+    setEditingSite(null);
+    reset({ name: '', description: '', isActive: true });
     setShowForm(true);
   };
 
-  const openEditForm = (category: Category) => {
+  const openEditForm = (site: Site) => {
     setError('');
     setSuccess('');
-    setEditingCategory(category);
-    reset({
-      name: category.name,
-      description: category.description ?? '',
-      isActive: category.isActive,
-    });
+    setEditingSite(site);
+    reset({ name: site.name, description: site.description ?? '', isActive: site.isActive });
     setShowForm(true);
   };
 
   const closeForm = () => {
-    setEditingCategory(null);
+    setEditingSite(null);
     setShowForm(false);
-    reset({
-      name: '',
-      description: '',
-      isActive: true,
-    });
+    reset({ name: '', description: '', isActive: true });
   };
 
-  const handleSaveCategory = async (data: CategoryFormData) => {
+  const handleSaveSite = async (data: SiteFormData) => {
     try {
       setError('');
       setSuccess('');
 
-      if (editingCategory) {
-        await updateCategory(editingCategory.id, {
-          name: data.name,
-          description: data.description,
-          isActive: data.isActive,
-        });
-        setSuccess('Category updated.');
+      if (editingSite) {
+        await updateSite(editingSite.id, data);
+        setSuccess('Site updated.');
       } else {
-        await createCategory({
-          name: data.name,
-          description: data.description,
-          isActive: data.isActive,
-        });
-        setSuccess('Category created.');
+        await createSite(data);
+        setSuccess('Site created.');
       }
 
       closeForm();
-      await loadCategories({ showLoading: false });
+      await loadSites({ showLoading: false });
     } catch (saveError) {
-      setError(getErrorMessage(saveError, 'Cannot save category.'));
+      setError(getErrorMessage(saveError, 'Cannot save site.'));
       throw saveError;
     }
   };
 
-  const handleToggleActive = async (category: Category) => {
+  const handleToggleActive = async (site: Site) => {
     try {
       setError('');
       setSuccess('');
-      setPendingCategoryId(category.id);
-      const updatedCategory = await updateCategory(category.id, {
-        isActive: !category.isActive,
-      });
+      setPendingSiteId(site.id);
+      const updatedSite = await updateSite(site.id, { isActive: !site.isActive });
 
-      if (updatedCategory) {
-        setSuccess(`${updatedCategory.name} is now ${updatedCategory.isActive ? 'active' : 'inactive'}.`);
+      if (updatedSite) {
+        setSuccess(`${updatedSite.name} is now ${updatedSite.isActive ? 'active' : 'inactive'}.`);
       }
 
-      await loadCategories({ showLoading: false });
+      await loadSites({ showLoading: false });
     } catch (toggleError) {
-      setError(getErrorMessage(toggleError, 'Cannot update category status.'));
+      setError(getErrorMessage(toggleError, 'Cannot update site status.'));
     } finally {
-      setPendingCategoryId(null);
+      setPendingSiteId(null);
     }
   };
 
@@ -185,8 +152,8 @@ export function CategoriesPage() {
     <section className="rounded-lg border border-slate-200 bg-white">
       <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Categories</h2>
-          <p className="text-sm text-slate-500">Add, edit, and manage active category records.</p>
+          <h2 className="text-lg font-semibold text-slate-950">Sites</h2>
+          <p className="text-sm text-slate-500">Add, edit, and manage active site records.</p>
         </div>
 
         <motion.button
@@ -197,7 +164,7 @@ export function CategoriesPage() {
           className="inline-flex w-fit items-center gap-2 rounded bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
         >
           <Plus size={16} />
-          Add category
+          Add site
         </motion.button>
       </div>
 
@@ -207,7 +174,7 @@ export function CategoriesPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            onSubmit={handleSubmit(handleSaveCategory)}
+            onSubmit={handleSubmit(handleSaveSite)}
             className="grid gap-4 rounded-lg border border-slate-200 p-4 lg:grid-cols-[1fr_1.4fr_160px_auto]"
           >
             <label className="block">
@@ -216,7 +183,7 @@ export function CategoriesPage() {
                 {...register('name')}
                 disabled={isSubmitting}
                 className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
-                placeholder="Category name"
+                placeholder="Site name"
               />
               {errors.name ? <p className="mt-1 text-sm text-rose-600">{errors.name.message}</p> : null}
             </label>
@@ -247,8 +214,8 @@ export function CategoriesPage() {
                 disabled={isSubmitting}
                 className="inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                {editingCategory ? <Edit3 size={16} /> : <Plus size={16} />}
-                {isSubmitting ? 'Saving...' : editingCategory ? 'Update' : 'Create'}
+                {editingSite ? <Edit3 size={16} /> : <Plus size={16} />}
+                {isSubmitting ? 'Saving...' : editingSite ? 'Update' : 'Create'}
               </button>
               <button
                 type="button"
@@ -273,11 +240,11 @@ export function CategoriesPage() {
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
               className="w-full rounded border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500"
-              placeholder="Search categories"
+              placeholder="Search sites"
             />
           </label>
           <p className="text-sm text-slate-500">
-            Showing {filteredCategories.length} of {categories.length} categories
+            Showing {filteredSites.length} of {sites.length} sites
           </p>
         </div>
 
@@ -285,7 +252,7 @@ export function CategoriesPage() {
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
               <tr>
-                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Site</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Updated</th>
                 <th className="px-4 py-3 text-right">Actions</th>
@@ -294,55 +261,44 @@ export function CategoriesPage() {
             <tbody className="divide-y divide-slate-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                    Loading categories...
-                  </td>
+                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">Loading sites...</td>
                 </tr>
-              ) : categories.length === 0 ? (
+              ) : sites.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                    No categories found.
-                  </td>
+                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">No sites found.</td>
                 </tr>
-              ) : filteredCategories.length === 0 ? (
+              ) : filteredSites.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                    No categories match your search.
-                  </td>
+                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500">No sites match your search.</td>
                 </tr>
               ) : (
-                filteredCategories.map((category) => {
-                  const isPending = pendingCategoryId === category.id;
+                filteredSites.map((site) => {
+                  const isPending = pendingSiteId === site.id;
 
                   return (
-                    <tr key={category.id}>
+                    <tr key={site.id}>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="flex h-9 w-9 items-center justify-center rounded bg-slate-100 text-slate-700">
-                            <Tags size={18} />
+                            <MapPin size={18} />
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-950">{category.name}</p>
-                            <p className="text-xs text-slate-500">{category.description || 'No description'}</p>
+                            <p className="font-semibold text-slate-950">{site.name}</p>
+                            <p className="text-xs text-slate-500">{site.description || 'No description'}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span
-                          className={[
-                            'rounded px-2.5 py-1 text-xs font-semibold',
-                            category.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700',
-                          ].join(' ')}
-                        >
-                          {category.isActive ? 'Active' : 'Inactive'}
+                        <span className={['rounded px-2.5 py-1 text-xs font-semibold', site.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'].join(' ')}>
+                          {site.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-500">{category.updatedAt ?? '-'}</td>
+                      <td className="px-4 py-3 text-slate-500">{site.updatedAt ?? '-'}</td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() => openEditForm(category)}
+                            onClick={() => openEditForm(site)}
                             disabled={isPending}
                             className="inline-flex items-center gap-2 rounded border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
                           >
@@ -351,12 +307,12 @@ export function CategoriesPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleToggleActive(category)}
+                            onClick={() => handleToggleActive(site)}
                             disabled={isPending}
                             className="inline-flex items-center gap-2 rounded border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
                           >
                             <RefreshCw size={14} />
-                            {category.isActive ? 'Deactivate' : 'Activate'}
+                            {site.isActive ? 'Deactivate' : 'Activate'}
                           </button>
                         </div>
                       </td>

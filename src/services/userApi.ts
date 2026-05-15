@@ -5,6 +5,7 @@ export type CreateUserRequest = {
   name: string;
   email: string;
   role: Role;
+  siteId: string;
 };
 
 type UsersResponse =
@@ -78,6 +79,11 @@ export async function createUser(payload: CreateUserRequest) {
 
 export async function updateUserActive(userId: string, isActive: boolean) {
   const response = await apiClient.patch<UserResponse>(`/users/${userId}/active`, { isActive });
+  return normalizeUserResponse(response.data).user;
+}
+
+export async function updateUserSite(userId: string, siteId: string) {
+  const response = await apiClient.patch<UserResponse>(`/users/${userId}/site`, { siteId });
   return normalizeUserResponse(response.data).user;
 }
 

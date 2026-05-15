@@ -1,4 +1,4 @@
-export type Category = {
+export type Site = {
   id: string;
   name: string;
   description?: string | null;

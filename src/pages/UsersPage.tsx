@@ -5,14 +5,17 @@ import { motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { createUser, fetchUsers, resetUserPassword, updateUserActive } from '../services/userApi';
+import { fetchSites } from '../services/siteApi';
+import { createUser, fetchUsers, resetUserPassword, updateUserActive, updateUserSite } from '../services/userApi';
 import { useAuthStore } from '../stores/authStore';
 import type { AppUser, Role } from '../types/auth';
+import type { Site } from '../types/site';
 
 const createUserSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   email: z.string().trim().email('Email format is invalid'),
   role: z.enum(['USER', 'ADMIN', 'GUEST']),
+  siteId: z.string().trim().min(1, 'Site is required'),
 });
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;
@@ -44,6 +47,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 export function UsersPage() {
   const currentUser = useAuthStore((state) => state.user)!;
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -62,6 +66,7 @@ export function UsersPage() {
       name: '',
       email: '',
       role: 'USER',
+      siteId: '',
     },
   });
 
@@ -92,6 +97,30 @@ export function UsersPage() {
     loadUsers();
   }, [loadUsers]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSites() {
+      try {
+        const loadedSites = await fetchSites();
+
+        if (isMounted) {
+          setSites(loadedSites.filter((site) => site.isActive));
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setError(getErrorMessage(loadError, 'Cannot load sites.'));
+        }
+      }
+    }
+
+    loadSites();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const filteredUsers = useMemo(() => {
     const query = searchText.trim().toLowerCase();
 
@@ -104,6 +133,7 @@ export function UsersPage() {
       const searchValue = [
         user.name,
         user.email,
+        user.site?.name ?? '',
         user.role,
         active ? 'active' : 'inactive',
         user.forceResetPassword ? 'reset required' : 'reset clear',
@@ -123,6 +153,7 @@ export function UsersPage() {
         name: data.name,
         email: data.email,
         role: data.role,
+        siteId: data.siteId,
       });
 
       reset();
@@ -149,6 +180,25 @@ export function UsersPage() {
       await loadUsers({ showLoading: false });
     } catch (toggleError) {
       setError(getErrorMessage(toggleError, 'Cannot update user status.'));
+    } finally {
+      setPendingUserId(null);
+    }
+  };
+
+  const handleChangeSite = async (user: AppUser, siteId: string) => {
+    try {
+      setError('');
+      setSuccess('');
+      setPendingUserId(user.id);
+      const updatedUser = await updateUserSite(user.id, siteId);
+
+      if (updatedUser) {
+        setSuccess(`${updatedUser.name} site updated.`);
+      }
+
+      await loadUsers({ showLoading: false });
+    } catch (siteError) {
+      setError(getErrorMessage(siteError, 'Cannot update user site.'));
     } finally {
       setPendingUserId(null);
     }
@@ -204,7 +254,7 @@ export function UsersPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
             onSubmit={handleSubmit(handleCreateUser)}
-            className="grid gap-4 rounded-lg border border-slate-200 p-4 lg:grid-cols-[1fr_1fr_180px_auto]"
+            className="grid gap-4 rounded-lg border border-slate-200 p-4 lg:grid-cols-[1fr_1fr_180px_220px_auto]"
           >
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Name</span>
@@ -242,6 +292,23 @@ export function UsersPage() {
                   </option>
                 ))}
               </select>
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700">Site</span>
+              <select
+                {...register('siteId')}
+                disabled={isSubmitting}
+                className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+              >
+                <option value="">Select site</option>
+                {sites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.name}
+                  </option>
+                ))}
+              </select>
+              {errors.siteId ? <p className="mt-1 text-sm text-rose-600">{errors.siteId.message}</p> : null}
             </label>
 
             <div className="flex items-end gap-2">
@@ -292,6 +359,7 @@ export function UsersPage() {
               <tr>
                 <th className="px-4 py-3">User</th>
                 <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">Site</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Reset</th>
                 <th className="px-4 py-3 text-right">Actions</th>
@@ -300,19 +368,19 @@ export function UsersPage() {
             <tbody className="divide-y divide-slate-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                     Loading users...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                     No users found.
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                     No users match your search.
                   </td>
                 </tr>
@@ -340,6 +408,21 @@ export function UsersPage() {
                         <span className="rounded bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">
                           {user.role}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={user.siteId ?? ''}
+                          onChange={(event) => handleChangeSite(user, event.target.value)}
+                          disabled={isPending}
+                          className="w-44 rounded border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-sky-500 disabled:bg-slate-100"
+                        >
+                          <option value="">No site</option>
+                          {sites.map((site) => (
+                            <option key={site.id} value={site.id}>
+                              {site.name}
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td className="px-4 py-3">
                         <span

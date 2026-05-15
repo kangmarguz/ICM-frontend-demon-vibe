@@ -1,16 +1,18 @@
 import { AxiosError } from 'axios';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ProjectForm } from '../components/projects/ProjectForm';
 import type { CreateProjectFormPayload } from '../components/projects/projectFormSchema';
 import { resizeImageToBase64 } from '../lib/resizeImageToBase64';
+import { fetchSites } from '../services/siteApi';
 import { createProject as createProjectApi } from '../services/projectApi';
 import { uploadToCloudinary } from '../services/uploadApi';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import type { Project } from '../types/project';
+import type { Site } from '../types/site';
 
 type ApiErrorResponse = {
   message?: string;
@@ -21,6 +23,7 @@ export function AddProjectPage() {
   const actionAddProject = useProjectStore((state) => state.actionAddProject);
   const navigate = useNavigate();
   const [createError, setCreateError] = useState('');
+  const [sites, setSites] = useState<Site[]>([]);
 
   const canCreate = user.role === 'USER' || user.role === 'ADMIN';
   const helperText = useMemo(() => {
@@ -33,6 +36,34 @@ export function AddProjectPage() {
     }
 
     return 'Create a project under your account.';
+  }, [user.role]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSites() {
+      if (user.role !== 'ADMIN') {
+        return;
+      }
+
+      try {
+        const loadedSites = await fetchSites();
+
+        if (isMounted) {
+          setSites(loadedSites.filter((site) => site.isActive));
+        }
+      } catch {
+        if (isMounted) {
+          setCreateError('Cannot load sites.');
+        }
+      }
+    }
+
+    loadSites();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user.role]);
 
   const handleCreateProject = async (payload: CreateProjectFormPayload) => {
@@ -61,6 +92,7 @@ export function AddProjectPage() {
         title: payload.title,
         description: payload.description,
         urlLink: payload.urlLink,
+        siteId: payload.siteId,
         status: payload.status,
         isActive: payload.isActive,
         images: uploadedImages,
@@ -109,9 +141,11 @@ export function AddProjectPage() {
 
       <ProjectForm
         canCreate={canCreate}
+        sites={sites}
         errorMessage={createError}
         helperText={helperText}
         onCreate={handleCreateProject}
+        showSiteControl={user.role === 'ADMIN'}
         showProjectControls={user.role !== 'USER'}
       />
     </motion.div>

@@ -5,6 +5,7 @@ export type CreateProjectRequest = {
   title: string;
   description?: string;
   urlLink?: string;
+  siteId?: string;
   status: ProjectStatus;
   isActive: boolean;
   images: Array<{
@@ -19,6 +20,7 @@ export type UpdateProjectRequest = {
   title: string;
   description?: string;
   urlLink?: string;
+  siteId?: string | null;
   status: ProjectStatus;
   isActive: boolean;
   images?: Array<{
