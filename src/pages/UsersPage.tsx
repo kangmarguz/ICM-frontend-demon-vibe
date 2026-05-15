@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
-import { KeyRound, Plus, RefreshCw, ShieldCheck, UserRound, UsersRound } from 'lucide-react';
+import { KeyRound, Plus, RefreshCw, Search, ShieldCheck, UserRound, UsersRound } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { createUser, fetchUsers, resetUserPassword, updateUserActive } from '../services/userApi';
@@ -41,16 +41,6 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-function upsertUser(users: AppUser[], updatedUser: AppUser) {
-  const existingIndex = users.findIndex((user) => user.id === updatedUser.id);
-
-  if (existingIndex === -1) {
-    return [updatedUser, ...users];
-  }
-
-  return users.map((user) => (user.id === updatedUser.id ? updatedUser : user));
-}
-
 export function UsersPage() {
   const currentUser = useAuthStore((state) => state.user)!;
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -59,6 +49,7 @@ export function UsersPage() {
   const [success, setSuccess] = useState('');
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const {
     register,
@@ -74,35 +65,55 @@ export function UsersPage() {
     },
   });
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadUsers() {
+  const loadUsers = useCallback(
+    async ({ showLoading = true, showError = true }: { showLoading?: boolean; showError?: boolean } = {}) => {
       try {
-        setIsLoading(true);
+        if (showLoading) {
+          setIsLoading(true);
+        }
         setError('');
         const loadedUsers = await fetchUsers();
 
-        if (isMounted) {
-          setUsers(loadedUsers);
-        }
+        setUsers(loadedUsers);
       } catch (loadError) {
-        if (isMounted) {
+        if (showError) {
           setError(getErrorMessage(loadError, 'Cannot load users.'));
         }
       } finally {
-        if (isMounted) {
+        if (showLoading) {
           setIsLoading(false);
         }
       }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  const filteredUsers = useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+
+    if (!query) {
+      return users;
     }
 
-    loadUsers();
+    return users.filter((user) => {
+      const active = isUserActive(user);
+      const searchValue = [
+        user.name,
+        user.email,
+        user.role,
+        active ? 'active' : 'inactive',
+        user.forceResetPassword ? 'reset required' : 'reset clear',
+      ]
+        .join(' ')
+        .toLowerCase();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      return searchValue.includes(query);
+    });
+  }, [searchText, users]);
 
   const handleCreateUser = async (data: CreateUserFormData) => {
     try {
@@ -114,15 +125,10 @@ export function UsersPage() {
         role: data.role,
       });
 
-      const createdUser = result.user;
-
-      if (createdUser) {
-        setUsers((currentUsers) => upsertUser(currentUsers, createdUser));
-      }
-
       reset();
       setShowCreateForm(false);
       setSuccess(`User created. Default password: ${result.defaultPassword ?? '12345678'}`);
+      await loadUsers({ showLoading: false });
     } catch (createError) {
       setError(getErrorMessage(createError, 'Cannot create user.'));
       throw createError;
@@ -137,9 +143,10 @@ export function UsersPage() {
       const updatedUser = await updateUserActive(user.id, !isUserActive(user));
 
       if (updatedUser) {
-        setUsers((currentUsers) => upsertUser(currentUsers, updatedUser));
-        setSuccess(`${updatedUser.name} is now ${updatedUser.isActive ? 'active' : 'inactive'}.`);
+        setSuccess(`${updatedUser.name} is now ${isUserActive(updatedUser) ? 'active' : 'inactive'}.`);
       }
+
+      await loadUsers({ showLoading: false });
     } catch (toggleError) {
       setError(getErrorMessage(toggleError, 'Cannot update user status.'));
     } finally {
@@ -155,9 +162,10 @@ export function UsersPage() {
       const updatedUser = await resetUserPassword(user.id);
 
       if (updatedUser) {
-        setUsers((currentUsers) => upsertUser(currentUsers, updatedUser));
         setSuccess(`${updatedUser.name} password reset to 12345678.`);
       }
+
+      await loadUsers({ showLoading: false });
     } catch (resetError) {
       setError(getErrorMessage(resetError, 'Cannot reset password.'));
     } finally {
@@ -263,6 +271,21 @@ export function UsersPage() {
         {error ? <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
         {success ? <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</div> : null}
 
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <label className="relative block w-full md:max-w-sm">
+            <Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              className="w-full rounded border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500"
+              placeholder="Search users"
+            />
+          </label>
+          <p className="text-sm text-slate-500">
+            Showing {filteredUsers.length} of {users.length} users
+          </p>
+        </div>
+
         <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
@@ -287,8 +310,14 @@ export function UsersPage() {
                     No users found.
                   </td>
                 </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    No users match your search.
+                  </td>
+                </tr>
               ) : (
-                users.map((user) => {
+                filteredUsers.map((user) => {
                   const Icon = roleIcon[user.role];
                   const isPending = pendingUserId === user.id;
                   const isCurrentUser = user.id === currentUser.id;
