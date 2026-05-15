@@ -1,4 +1,4 @@
-import { LogOut, PanelLeft, Settings, Users, FolderKanban, Home, PlusSquare, MapPin } from 'lucide-react';
+import { Building2, LogOut, PanelLeft, Settings, Users, FolderKanban, Home, PlusSquare, MapPin, UserRound } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 
@@ -16,6 +16,7 @@ export function AppLayout() {
   const actionLogout = useAuthStore((state) => state.actionLogout);
   const navigate = useNavigate();
   const mustResetPassword = Boolean(user?.forceResetPassword);
+  const siteName = user?.site?.name ?? (user?.siteId ? `Site ${user.siteId}` : 'No site assigned');
 
   const handleLogout = () => {
     actionLogout();
@@ -64,8 +65,14 @@ export function AppLayout() {
 
         <div className="border-t border-slate-200 p-4">
           <div className="mb-3 rounded border border-slate-200 bg-slate-50 p-3">
-            <p className="truncate text-sm font-semibold">{user?.name}</p>
-            <p className="text-xs text-slate-500">{user?.role}</p>
+            <p className="truncate text-sm font-semibold text-slate-950">{user?.name}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+              <span className="rounded bg-indigo-100 px-2 py-0.5 font-semibold text-indigo-700">{user?.role}</span>
+              <span className="inline-flex min-w-0 items-center gap-1 text-slate-500">
+                <Building2 size={13} />
+                <span className="truncate">{siteName}</span>
+              </span>
+            </div>
           </div>
           <button
             type="button"
@@ -79,13 +86,27 @@ export function AppLayout() {
       </aside>
 
       <div className="md:pl-64">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-8">
-          <div>
+        <header className="sticky top-0 z-10 flex min-h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2 md:px-8">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workspace</p>
-            <h1 className="text-lg font-semibold">Project Task Management</h1>
+            <h1 className="truncate text-lg font-semibold">Project Task Management</h1>
           </div>
-          <div className="rounded border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700">
-            {user?.role}
+          <div className="flex min-w-[180px] max-w-[min(360px,55vw)] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm ring-1 ring-slate-100">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white shadow-sm shadow-indigo-100">
+              <UserRound size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="truncate text-sm font-semibold text-slate-950">{user?.name}</p>
+                <span className="shrink-0 rounded bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-100">
+                  {user?.role}
+                </span>
+              </div>
+              <div className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-slate-500">
+                <Building2 size={13} className="shrink-0" />
+                <span className="truncate">{siteName}</span>
+              </div>
+            </div>
           </div>
         </header>
 
