@@ -8,7 +8,8 @@ import { z } from 'zod';
 import { updateUser } from '../services/authApi';
 import { useAuthStore } from '../stores/authStore';
 
-const settingsSchema = z
+const createSettingsSchema = (forceResetPassword: boolean) =>
+  z
   .object({
     name: z.string().trim().min(1, 'Name is required'),
     oldPassword: z.string(),
@@ -21,12 +22,16 @@ const settingsSchema = z
     message: 'Old password is required to change password',
     path: ['oldPassword'],
   })
+  .refine((data) => !forceResetPassword || data.password.length > 0, {
+    message: 'New password is required',
+    path: ['password'],
+  })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
   });
 
-type SettingsFormData = z.infer<typeof settingsSchema>;
+type SettingsFormData = z.infer<ReturnType<typeof createSettingsSchema>>;
 
 type ApiErrorResponse = {
   message?: string;
@@ -37,6 +42,7 @@ export function SettingsPage() {
   const actionSetUser = useAuthStore((state) => state.actionSetUser);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState('');
+  const forceResetPassword = Boolean(user.forceResetPassword);
 
   const {
     register,
@@ -44,7 +50,7 @@ export function SettingsPage() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<SettingsFormData>({
-    resolver: zodResolver(settingsSchema),
+    resolver: zodResolver(createSettingsSchema(forceResetPassword)),
     defaultValues: {
       name: user.name,
       oldPassword: '',
@@ -114,7 +120,9 @@ export function SettingsPage() {
           </motion.div>
           <div>
             <h2 className="text-lg font-semibold text-slate-950">Settings</h2>
-            <p className="text-sm text-slate-500">Edit your current profile data.</p>
+            <p className="text-sm text-slate-500">
+              {forceResetPassword ? 'Change your password before continuing.' : 'Edit your current profile data.'}
+            </p>
           </div>
         </div>
       </div>
@@ -182,7 +190,7 @@ export function SettingsPage() {
                 {...register('password')}
                 type="password"
                 disabled={isSubmitting}
-                placeholder="Leave blank to keep current"
+                placeholder={forceResetPassword ? 'Required' : 'Leave blank to keep current'}
                 autoComplete="new-password"
                 className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500 disabled:bg-slate-100"
               />

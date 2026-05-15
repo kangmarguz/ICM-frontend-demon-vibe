@@ -5,6 +5,7 @@ export type AppUser = {
   name: string;
   email: string;
   role: Role;
+  isActive?: boolean;
   ownerId?: string;
   forceResetPassword?: boolean;
 };

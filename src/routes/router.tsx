@@ -13,7 +13,7 @@ import { useAuthStore } from '../stores/authStore';
 function UsersRoute() {
   const user = useAuthStore((state) => state.user);
 
-  if (user?.role === 'USER') {
+  if (user?.role !== 'ADMIN') {
     return <Navigate to="/" replace />;
   }
 

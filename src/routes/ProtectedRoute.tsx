@@ -9,5 +9,9 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  if (user.forceResetPassword && location.pathname !== '/settings') {
+    return <Navigate to="/settings" replace state={{ from: location }} />;
+  }
+
   return <Outlet />;
 }

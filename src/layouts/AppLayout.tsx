@@ -6,7 +6,7 @@ const menuItems = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/projects', label: 'Projects', icon: FolderKanban, end: true },
   { to: '/projects/new', label: 'Add Project', icon: PlusSquare, end: true },
-  { to: '/users', label: 'Users', icon: Users, end: true, hiddenForRoles: ['USER'] },
+  { to: '/users', label: 'Users', icon: Users, end: true, hiddenForRoles: ['USER', 'GUEST'] },
   { to: '/settings', label: 'Settings', icon: Settings, end: true },
 ];
 
