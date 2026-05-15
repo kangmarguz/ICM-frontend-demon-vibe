@@ -15,6 +15,7 @@ export function AppLayout() {
   const user = useAuthStore((state) => state.user);
   const actionLogout = useAuthStore((state) => state.actionLogout);
   const navigate = useNavigate();
+  const mustResetPassword = Boolean(user?.forceResetPassword);
 
   const handleLogout = () => {
     actionLogout();
@@ -36,7 +37,7 @@ export function AppLayout() {
 
         <nav className="flex-1 space-y-1 px-3 py-4">
           {menuItems
-            .filter((item) => !user?.role || !item.hiddenForRoles?.includes(user.role))
+            .filter((item) => (!mustResetPassword || item.to === '/settings') && (!user?.role || !item.hiddenForRoles?.includes(user.role)))
             .map((item) => {
             const Icon = item.icon;
 

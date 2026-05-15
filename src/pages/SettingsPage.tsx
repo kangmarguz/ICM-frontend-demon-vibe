@@ -8,6 +8,8 @@ import { z } from 'zod';
 import { updateUser } from '../services/authApi';
 import { useAuthStore } from '../stores/authStore';
 
+const DEFAULT_RESET_PASSWORD = '12345678';
+
 const createSettingsSchema = (forceResetPassword: boolean) =>
   z
   .object({
@@ -53,7 +55,7 @@ export function SettingsPage() {
     resolver: zodResolver(createSettingsSchema(forceResetPassword)),
     defaultValues: {
       name: user.name,
-      oldPassword: '',
+      oldPassword: forceResetPassword ? DEFAULT_RESET_PASSWORD : '',
       password: '',
       confirmPassword: '',
     },
@@ -62,22 +64,23 @@ export function SettingsPage() {
   useEffect(() => {
     reset({
       name: user.name,
-      oldPassword: '',
+      oldPassword: forceResetPassword ? DEFAULT_RESET_PASSWORD : '',
       password: '',
       confirmPassword: '',
     });
-  }, [reset, user.name]);
+  }, [forceResetPassword, reset, user.name]);
 
   const onSubmit = async (data: SettingsFormData) => {
     try {
       setSaveError('');
       setSaveSuccess('');
+      const oldPassword = forceResetPassword ? DEFAULT_RESET_PASSWORD : data.oldPassword;
 
       const updatedUser = await updateUser(
         user.id,
         {
           name: data.name,
-          ...(data.password ? { oldPassword: data.oldPassword, newPassword: data.password } : {}),
+          ...(data.password ? { oldPassword, newPassword: data.password } : {}),
         },
         user,
       );
@@ -170,18 +173,22 @@ export function SettingsPage() {
             />
           </label>
 
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700">Old password</span>
-            <input
-              {...register('oldPassword')}
-              type="password"
-              disabled={isSubmitting}
-              placeholder="Current password"
-              autoComplete="current-password"
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500 disabled:bg-slate-100"
-            />
-            {errors.oldPassword ? <p className="mt-1 text-sm text-rose-600">{errors.oldPassword.message}</p> : null}
-          </label>
+          {forceResetPassword ? (
+            <input type="hidden" {...register('oldPassword')} value={DEFAULT_RESET_PASSWORD} />
+          ) : (
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700">Old password</span>
+              <input
+                {...register('oldPassword')}
+                type="password"
+                disabled={isSubmitting}
+                placeholder="Current password"
+                autoComplete="current-password"
+                className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500 disabled:bg-slate-100"
+              />
+              {errors.oldPassword ? <p className="mt-1 text-sm text-rose-600">{errors.oldPassword.message}</p> : null}
+            </label>
+          )}
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
