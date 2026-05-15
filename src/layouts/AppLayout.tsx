@@ -1,4 +1,5 @@
-import { Building2, LogOut, PanelLeft, Settings, Users, FolderKanban, Home, PlusSquare, MapPin, UserRound } from 'lucide-react';
+import { Building2, LogOut, Menu, PanelLeft, Settings, Users, FolderKanban, Home, PlusSquare, MapPin, UserRound } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 
@@ -11,8 +12,7 @@ const menuItems = [
   { to: '/settings', label: 'Settings', icon: Settings, end: true },
 ];
 
-const sidebarWidthClass = 'md:w-72';
-const sidebarOffsetClass = 'md:pl-72';
+const desktopSidebarWidthClass = 'md:w-72';
 const shellGutterClass = 'px-4 md:px-6 lg:px-8';
 const shellBarHeightClass = 'min-h-20';
 
@@ -20,17 +20,75 @@ export function AppLayout() {
   const user = useAuthStore((state) => state.user);
   const actionLogout = useAuthStore((state) => state.actionLogout);
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const mustResetPassword = Boolean(user?.forceResetPassword);
   const siteName = user?.site?.name ?? (user?.siteId ? `Site ${user.siteId}` : 'No site assigned');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const desktopMedia = window.matchMedia('(min-width: 768px)');
+    const syncSidebarForViewport = (event?: MediaQueryList | MediaQueryListEvent) => {
+      setIsSidebarOpen(event ? event.matches : desktopMedia.matches);
+    };
+
+    syncSidebarForViewport();
+    desktopMedia.addEventListener('change', syncSidebarForViewport);
+
+    return () => desktopMedia.removeEventListener('change', syncSidebarForViewport);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, []);
 
   const handleLogout = () => {
     actionLogout();
     navigate('/login', { replace: true });
   };
 
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen((current) => !current);
+  };
+
+  const handleNavItemClick = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <aside className={`fixed inset-y-0 left-0 z-20 hidden border-r border-slate-200 bg-white md:flex md:flex-col ${sidebarWidthClass}`}>
+      {isSidebarOpen ? (
+        <button
+          type="button"
+          aria-label="Close sidebar overlay"
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 z-20 bg-slate-950/30 md:hidden"
+        />
+      ) : null}
+
+      <aside
+        className={[
+          'fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform duration-200 ease-out md:w-72',
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          desktopSidebarWidthClass,
+        ].join(' ')}
+      >
         <div className={`flex items-center gap-3 border-b border-slate-200 ${shellBarHeightClass} px-6`}>
           <div className="flex h-10 w-10 items-center justify-center rounded bg-indigo-600 text-white">
             <PanelLeft size={20} />
@@ -52,6 +110,7 @@ export function AppLayout() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                onClick={handleNavItemClick}
                 className={({ isActive }) =>
                   [
                     'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition',
@@ -80,11 +139,21 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <div className={sidebarOffsetClass}>
+      <div className={isSidebarOpen ? 'md:pl-72' : 'md:pl-0'}>
         <header className={`sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 backdrop-blur ${shellBarHeightClass} ${shellGutterClass}`}>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workspace</p>
-            <h1 className="truncate text-lg font-semibold">Project Task Management</h1>
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSidebarToggle}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm ring-1 ring-slate-100 hover:bg-slate-50 hover:text-slate-950"
+              aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            >
+              <Menu size={18} />
+            </button>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workspace</p>
+              <h1 className="truncate text-lg font-semibold">Project Task Management</h1>
+            </div>
           </div>
           <div className="flex min-w-[180px] max-w-[min(360px,55vw)] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm ring-1 ring-slate-100">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white shadow-sm shadow-indigo-100">
