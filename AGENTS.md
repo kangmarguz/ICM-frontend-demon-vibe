@@ -37,6 +37,77 @@ cd task-manager-app
 # 2. Install Dependencies
 npm install axios zustand react-router-dom lucide-react react-hook-form @hookform/resolvers zod
 
-# 3. Install Tailwind CSS
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
+---
+
+## 3. Development Skills & Agents
+
+เพื่อให้การพัฒนาโปรเจกต์นี้มีประสิทธิภาพ แนะนำให้มีทักษะและเครื่องมือต่อไปนี้:
+
+### Required Skills
+- **React & TypeScript:** ความรู้พื้นฐานในการพัฒนา Component และ Type Safety
+- **Tailwind CSS:** การออกแบบ UI ด้วย Utility Classes
+- **State Management:** การใช้ Zustand สำหรับจัดการ Global State
+- **API Integration:** การเรียกใช้งาน REST API ด้วย Axios
+- **Form Handling:** การใช้ React Hook Form และ Zod สำหรับ Validation
+- **File Upload:** การจัดการไฟล์และ Cloudinary สำหรับ Media Storage
+
+### VS Code Agents & Skills (สำหรับ AI Assistant)
+- **project-setup-info-local:** สำหรับการตั้งค่าโปรเจกต์ใหม่
+- **agent-customization:** สำหรับปรับแต่ง Agent และ Skill ใน VS Code
+- **get-search-view-results:** สำหรับค้นหาและวิเคราะห์โค้ดในโปรเจกต์
+- **debug-java-application:** สำหรับ Debug Java Application (ถ้ามีการขยาย)
+- **prisma-migrate-dev:** สำหรับจัดการ Database Migration ด้วย Prisma
+
+### Best Practices
+- ใช้ TypeScript อย่างเคร่งครัดเพื่อลด Bug
+- จัดการ State ด้วย Zustand แทน Redux เพื่อความเรียบง่าย
+- ใช้ React Hook Form สำหรับ Form ที่ซับซ้อน
+- ทดสอบโค้ดด้วย Unit Test และ Integration Test
+- ใช้ Git สำหรับ Version Control และ Code Review
+
+---
+
+## 4. โครงสร้างโปรเจกต์ (Project Structure)
+
+```
+src/
+├── components/         # UI Components
+├── hooks/              # Custom Hooks
+├── layouts/            # Layout Components
+├── lib/                # Utilities & Helpers
+├── pages/              # Page Components
+├── routes/             # Routing Configuration
+├── services/           # API Services
+├── stores/             # State Management
+├── types/              # TypeScript Types
+└── styles/             # Global Styles
+```
+
+---
+
+## 5. การพัฒนาและการ Deploy
+
+### Development
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+```
+
+### Deployment
+- Deploy ไปยัง Vercel หรือ Netlify สำหรับ Frontend
+- ใช้ Cloudinary สำหรับจัดการไฟล์
+- จัดการ Environment Variables สำหรับ API Keys
+
+---
+
+## 6. Troubleshooting
+
+- **Build Error:** ตรวจสอบ TypeScript Errors และ Dependencies
+- **API Error:** ตรวจสอบ Network และ API Endpoints
+- **Styling Issue:** ตรวจสอบ Tailwind Classes และ Responsive Design
+- **State Issue:** ตรวจสอบ Zustand Store และ Component Lifecycle
+
+---
+
+เอกสารนี้จะถูกอัปเดตตามการพัฒนาโปรเจกต์ หากมีคำถามเพิ่มเติม สามารถติดต่อทีมพัฒนาได้
