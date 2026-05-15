@@ -195,13 +195,17 @@ export function SettingsPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.3, ease: 'easeOut' }}
-          className="rounded-lg border border-slate-200 p-4"
+          className="rounded-lg border border-slate-200 p-4 text-center"
         >
           {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt={user.name} className="mb-4 h-20 w-20 rounded-2xl object-cover shadow-sm shadow-slate-200" />
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="mx-auto mb-4 h-28 w-28 rounded-3xl object-cover shadow-sm shadow-slate-200"
+            />
           ) : (
-            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
-              <UserRound size={30} />
+            <div className="mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-3xl bg-sky-50 text-sky-700">
+              <UserRound size={42} />
             </div>
           )}
           <p className="font-semibold text-slate-950">{user.name}</p>

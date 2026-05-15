@@ -160,10 +160,10 @@ export function AppLayout() {
               <img
                 src={user.avatarUrl}
                 alt={user.name}
-                className="h-9 w-9 shrink-0 rounded-md object-cover shadow-sm shadow-slate-200"
+                className="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm shadow-slate-200"
               />
             ) : (
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white shadow-sm shadow-indigo-100">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm shadow-indigo-100">
                 <UserRound size={18} />
               </div>
             )}
