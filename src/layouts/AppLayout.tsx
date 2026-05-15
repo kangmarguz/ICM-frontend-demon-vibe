@@ -11,6 +11,11 @@ const menuItems = [
   { to: '/settings', label: 'Settings', icon: Settings, end: true },
 ];
 
+const sidebarWidthClass = 'md:w-72';
+const sidebarOffsetClass = 'md:pl-72';
+const shellGutterClass = 'px-4 md:px-6 lg:px-8';
+const shellBarHeightClass = 'min-h-20';
+
 export function AppLayout() {
   const user = useAuthStore((state) => state.user);
   const actionLogout = useAuthStore((state) => state.actionLogout);
@@ -25,8 +30,8 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-slate-200 bg-white md:flex md:flex-col">
-        <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
+      <aside className={`fixed inset-y-0 left-0 z-20 hidden border-r border-slate-200 bg-white md:flex md:flex-col ${sidebarWidthClass}`}>
+        <div className={`flex items-center gap-3 border-b border-slate-200 ${shellBarHeightClass} px-6`}>
           <div className="flex h-10 w-10 items-center justify-center rounded bg-indigo-600 text-white">
             <PanelLeft size={20} />
           </div>
@@ -36,7 +41,7 @@ export function AppLayout() {
           </div>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-1.5 px-4 py-5">
           {menuItems
             .filter((item) => (!mustResetPassword || item.to === '/settings') && (!user?.role || !item.hiddenForRoles?.includes(user.role)))
             .map((item) => {
@@ -49,7 +54,7 @@ export function AppLayout() {
                 end={item.end}
                 className={({ isActive }) =>
                   [
-                    'flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition',
+                    'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition',
                     isActive
                       ? 'bg-indigo-50 text-indigo-700'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
@@ -63,7 +68,7 @@ export function AppLayout() {
           })}
         </nav>
 
-        <div className="border-t border-slate-200 p-4">
+        <div className="border-t border-slate-200 p-5">
           <div className="mb-3 rounded border border-slate-200 bg-slate-50 p-3">
             <p className="truncate text-sm font-semibold text-slate-950">{user?.name}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -85,8 +90,8 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <div className="md:pl-64">
-        <header className="sticky top-0 z-10 flex min-h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2 md:px-8">
+      <div className={sidebarOffsetClass}>
+        <header className={`sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 backdrop-blur ${shellBarHeightClass} ${shellGutterClass}`}>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workspace</p>
             <h1 className="truncate text-lg font-semibold">Project Task Management</h1>
@@ -110,7 +115,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="px-4 py-6 md:px-8">
+        <main className={`py-6 ${shellGutterClass}`}>
           <Outlet />
         </main>
       </div>
