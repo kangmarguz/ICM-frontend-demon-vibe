@@ -12,7 +12,7 @@ import { getProjectById, updateProject } from '../services/projectApi';
 import { deleteFromCloudinary, uploadToCloudinary } from '../services/uploadApi';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
-import type { ImageType, Project } from '../types/project';
+import type { ImageType, Project, ProjectImage } from '../types/project';
 
 const editProjectSchema = z.object({
   title: z.string().trim().min(1, 'Project title is required'),
@@ -55,6 +55,13 @@ const emptyPendingImages: Record<ImageType, PendingImage[]> = {
   IMAGE_3D: [],
   PAY_SLIP: [],
 };
+
+const toImagePayload = (image: ProjectImage) => ({
+  name: image.name,
+  url: image.url,
+  publicId: image.publicId ?? null,
+  type: image.type,
+});
 
 export function useProjectDetailController() {
   const { projectId } = useParams();
@@ -289,11 +296,25 @@ export function useProjectDetailController() {
         }),
       );
 
+      const uploadedTypes = new Set(uploadedImages.map((image) => image.type));
+      const imagesForUpdate = [
+        ...project.images
+          .filter((image) => {
+            if (!uploadedTypes.has(image.type)) {
+              return false;
+            }
+
+            return image.type !== 'PAY_SLIP';
+          })
+          .map(toImagePayload),
+        ...uploadedImages,
+      ];
+
       const updatedProject = await updateProject(projectId, {
         title: project.title,
         description: project.description ?? '',
         urlLink: project.urlLink ?? '',
-        images: uploadedImages,
+        images: imagesForUpdate,
         ...(showProjectControls ? { status: project.status, isActive: project.isActive } : {}),
       });
 
