@@ -93,7 +93,9 @@ export function ProjectList({
                   <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {project.images.map((image) => (
                       <figure key={image.id} className="overflow-hidden rounded border border-slate-200">
-                        <img src={image.url} alt={image.name} className="h-28 w-full object-cover" />
+                        <a href={image.url} target="_blank" rel="noreferrer" className="block">
+                          <img src={image.url} alt={image.name} className="h-28 w-full object-cover" />
+                        </a>
                         <figcaption className="space-y-1 px-2 py-1">
                           <p className="truncate text-xs text-slate-500">{image.name}</p>
                           <p className="w-fit rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">

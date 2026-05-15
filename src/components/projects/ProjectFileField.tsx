@@ -86,7 +86,9 @@ export function ProjectFileField({
               key={image.id}
               className="grid gap-3 rounded border border-slate-200 p-2 sm:grid-cols-[88px_1fr_auto] sm:items-center"
             >
-              <img src={image.previewUrl} alt={image.file.name} className="h-20 w-full rounded object-cover sm:w-20" />
+              <a href={image.previewUrl} target="_blank" rel="noreferrer" className="block">
+                <img src={image.previewUrl} alt={image.file.name} className="h-20 w-full rounded object-cover sm:w-20" />
+              </a>
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-slate-900">{image.file.name}</p>
                 <p className="mt-1 w-fit rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">

@@ -70,7 +70,9 @@ export function ProjectImagesPanel({
               <div className="grid grid-cols-2 gap-3">
                 {images.map((image) => (
                   <figure key={image.id} className="overflow-hidden rounded border border-slate-200">
-                    <img src={image.url} alt={image.name} className="h-28 w-full object-cover" />
+                    <a href={image.url} target="_blank" rel="noreferrer" className="block">
+                      <img src={image.url} alt={image.name} className="h-28 w-full object-cover" />
+                    </a>
                     <figcaption className="space-y-2 px-2 py-2">
                       <p className="truncate text-xs text-slate-500">{image.name}</p>
                       {canEdit && isEditing && image.publicId ? (
