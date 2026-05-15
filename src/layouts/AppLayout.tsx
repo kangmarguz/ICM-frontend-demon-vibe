@@ -1,4 +1,4 @@
-import { LogOut, PanelLeft, Settings, Users, FolderKanban, Home, PlusSquare } from 'lucide-react';
+import { LogOut, PanelLeft, Settings, Users, FolderKanban, Home, PlusSquare, Tags } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 
@@ -6,6 +6,7 @@ const menuItems = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/projects', label: 'Projects', icon: FolderKanban, end: true },
   { to: '/projects/new', label: 'Add Project', icon: PlusSquare, end: true },
+  { to: '/categories', label: 'Categories', icon: Tags, end: true, hiddenForRoles: ['USER', 'GUEST'] },
   { to: '/users', label: 'Users', icon: Users, end: true, hiddenForRoles: ['USER', 'GUEST'] },
   { to: '/settings', label: 'Settings', icon: Settings, end: true },
 ];
