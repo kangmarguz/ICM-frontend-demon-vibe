@@ -1,6 +1,13 @@
 import { FolderKanban, ShieldCheck, UserRound, UsersRound } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ProjectPagination } from '../components/projects/ProjectPagination';
+import { ProjectStatusFilterControl } from '../components/projects/ProjectStatusFilter';
+import {
+  getProjectStatusFilters,
+  paginateProjects,
+  type ProjectStatusFilter,
+} from '../components/projects/projectListControls';
 import { useLoadProjects } from '../hooks/useLoadProjects';
 import { getProjectStatusClassName } from '../lib/projectStatusStyles';
 import { useAuthStore } from '../stores/authStore';
@@ -28,15 +35,37 @@ const roleContent: Record<Role, { title: string; description: string; icon: type
 export function HomePage() {
   const user = useAuthStore((state) => state.user)!;
   const allProjects = useProjectStore((state) => state.projects);
+  const [statusFilter, setStatusFilter] = useState<ProjectStatusFilter>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
   const { isLoadingProjects, loadProjects, loadProjectsError } = useLoadProjects(user);
   const projects = useMemo(() => getVisibleProjects(allProjects, user), [allProjects, user]);
   const activeProjects = useMemo(() => projects.filter((project) => project.isActive), [projects]);
+  const isAdmin = user.role === 'ADMIN';
   const showActiveState = user.role !== 'USER';
+  const statusFilters = useMemo(() => getProjectStatusFilters(isAdmin), [isAdmin]);
+  const filteredProjects = useMemo(
+    () => projects.filter((project) => statusFilter === 'ALL' || project.status === statusFilter),
+    [projects, statusFilter],
+  );
+  const paginatedProjects = useMemo(
+    () => paginateProjects(filteredProjects, currentPage),
+    [currentPage, filteredProjects],
+  );
   const RoleIcon = roleContent[user.role].icon;
 
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
+
+  useEffect(() => {
+    if (!isAdmin && statusFilter === 'CANCELLED') {
+      setStatusFilter('ALL');
+    }
+  }, [isAdmin, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
 
   return (
     <motion.div
@@ -86,7 +115,7 @@ export function HomePage() {
         transition={{ delay: 0.2, duration: 0.3, ease: 'easeOut' }}
         className="rounded-lg border border-slate-200 bg-white"
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-6 py-4">
           <div>
             <h3 className="font-semibold text-slate-950">Recent projects</h3>
             <p className="text-sm text-slate-500">
@@ -97,32 +126,44 @@ export function HomePage() {
           </div>
           <FolderKanban className="text-slate-400" size={20} />
         </div>
+        <div className="border-b border-slate-200 px-6 py-4">
+          <ProjectStatusFilterControl filters={statusFilters} value={statusFilter} onChange={setStatusFilter} />
+        </div>
 
         {projects.length === 0 ? (
           <div className="px-6 py-10 text-sm text-slate-500">
             {isLoadingProjects ? 'Loading projects...' : loadProjectsError || 'No projects yet.'}
           </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="px-6 py-10 text-sm text-slate-500">No projects match this status.</div>
         ) : (
-          <div className="divide-y divide-slate-200">
-            {projects.map((project) => (
-              <motion.div
-                layout
-                key={project.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="grid gap-3 px-6 py-4 md:grid-cols-[1fr_auto] md:items-center"
-              >
-                <div>
-                  <p className="font-medium text-slate-950">{project.title}</p>
-                  {project.description ? <p className="mt-1 text-sm text-slate-500">{project.description}</p> : null}
-                </div>
-                <span className={`w-fit rounded px-3 py-1 text-xs font-semibold uppercase ${getProjectStatusClassName(project.status)}`}>
-                  {project.status}
-                </span>
-              </motion.div>
-            ))}
-          </div>
+          <>
+            <div className="divide-y divide-slate-200">
+              {paginatedProjects.items.map((project) => (
+                <motion.div
+                  layout
+                  key={project.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="grid gap-3 px-6 py-4 md:grid-cols-[1fr_auto] md:items-center"
+                >
+                  <div>
+                    <p className="font-medium text-slate-950">{project.title}</p>
+                    {project.description ? <p className="mt-1 text-sm text-slate-500">{project.description}</p> : null}
+                  </div>
+                  <span className={`w-fit rounded px-3 py-1 text-xs font-semibold uppercase ${getProjectStatusClassName(project.status)}`}>
+                    {project.status}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+            <ProjectPagination
+              currentPage={paginatedProjects.currentPage}
+              totalPages={paginatedProjects.totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </>
         )}
       </motion.section>
     </motion.div>

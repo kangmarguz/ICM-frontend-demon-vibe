@@ -21,8 +21,8 @@ export type UpdateProjectRequest = {
   description?: string;
   urlLink?: string;
   siteId?: string | null;
-  status: ProjectStatus;
-  isActive: boolean;
+  status?: ProjectStatus;
+  isActive?: boolean;
   images?: Array<{
     name: string;
     url: string;

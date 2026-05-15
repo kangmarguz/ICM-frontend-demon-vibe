@@ -248,13 +248,14 @@ export function ProjectDetailPage() {
     try {
       setSaveError('');
       setSaveSuccess('');
-      const updatedProject = await updateProject(projectId, {
+      const updatePayload = {
         title: data.title,
         description: data.description ?? '',
         urlLink: data.urlLink ?? '',
-        status: showProjectControls ? data.status : 'PENDING',
-        isActive: showProjectControls ? data.isActive : true,
-      });
+        ...(showProjectControls ? { status: data.status, isActive: data.isActive } : {}),
+      };
+
+      const updatedProject = await updateProject(projectId, updatePayload);
 
       setProject(updatedProject);
       actionUpdateProject(updatedProject);
@@ -311,14 +312,15 @@ export function ProjectDetailPage() {
         }),
       );
 
-      const updatedProject = await updateProject(projectId, {
+      const updatePayload = {
         title: project.title,
         description: project.description ?? '',
         urlLink: project.urlLink ?? '',
-        status: showProjectControls ? project.status : 'PENDING',
-        isActive: showProjectControls ? project.isActive : true,
         images: uploadedImages,
-      });
+        ...(showProjectControls ? { status: project.status, isActive: project.isActive } : {}),
+      };
+
+      const updatedProject = await updateProject(projectId, updatePayload);
 
       setProject(updatedProject);
       actionUpdateProject(updatedProject);

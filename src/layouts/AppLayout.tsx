@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/authStore';
 const menuItems = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/projects', label: 'Projects', icon: FolderKanban, end: true },
-  { to: '/projects/new', label: 'Add Project', icon: PlusSquare, end: true },
+  { to: '/projects/new', label: 'Add Project', icon: PlusSquare, end: true, hiddenForRoles: ['GUEST'] },
   { to: '/sites', label: 'Sites', icon: MapPin, end: true, hiddenForRoles: ['USER', 'GUEST'] },
   { to: '/users', label: 'Users', icon: Users, end: true, hiddenForRoles: ['USER', 'GUEST'] },
   { to: '/settings', label: 'Settings', icon: Settings, end: true },

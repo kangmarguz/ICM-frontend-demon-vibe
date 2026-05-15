@@ -3,6 +3,13 @@ import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProjectList } from '../components/projects/ProjectList';
+import { ProjectPagination } from '../components/projects/ProjectPagination';
+import { ProjectStatusFilterControl } from '../components/projects/ProjectStatusFilter';
+import {
+  getProjectStatusFilters,
+  paginateProjects,
+  type ProjectStatusFilter,
+} from '../components/projects/projectListControls';
 import { useLoadProjects } from '../hooks/useLoadProjects';
 import { useAuthStore } from '../stores/authStore';
 import { getVisibleProjects, useProjectStore } from '../stores/projectStore';
@@ -11,17 +18,25 @@ export function ProjectsPage() {
   const user = useAuthStore((state) => state.user)!;
   const allProjects = useProjectStore((state) => state.projects);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ProjectStatusFilter>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
   const { isLoadingProjects, loadProjects, loadProjectsError } = useLoadProjects(user);
   const projects = useMemo(() => getVisibleProjects(allProjects, user), [allProjects, user]);
+  const isAdmin = user.role === 'ADMIN';
   const showActiveState = user.role !== 'USER';
+  const statusFilters = useMemo(() => getProjectStatusFilters(isAdmin), [isAdmin]);
   const filteredProjects = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
 
-    if (!query) {
-      return projects;
-    }
-
     return projects.filter((project) => {
+      if (statusFilter !== 'ALL' && project.status !== statusFilter) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
       const searchableText = [
         project.title,
         project.description ?? '',
@@ -33,12 +48,26 @@ export function ProjectsPage() {
 
       return searchableText.includes(query);
     });
-  }, [projects, searchTerm, showActiveState]);
+  }, [projects, searchTerm, showActiveState, statusFilter]);
+  const paginatedProjects = useMemo(
+    () => paginateProjects(filteredProjects, currentPage),
+    [currentPage, filteredProjects],
+  );
   const canCreate = user.role === 'USER' || user.role === 'ADMIN';
 
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
+
+  useEffect(() => {
+    if (!isAdmin && statusFilter === 'CANCELLED') {
+      setStatusFilter('ALL');
+    }
+  }, [isAdmin, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   return (
     <motion.div
@@ -72,7 +101,7 @@ export function ProjectsPage() {
         ) : null}
       </motion.div>
 
-      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+      <div className="space-y-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
         <label className="relative block">
           <span className="sr-only">Search projects</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -95,13 +124,21 @@ export function ProjectsPage() {
             </button>
           ) : null}
         </label>
+        <ProjectStatusFilterControl filters={statusFilters} value={statusFilter} onChange={setStatusFilter} />
       </div>
 
       <ProjectList
-        emptyMessage={searchTerm.trim() ? 'No matching projects.' : 'No projects yet.'}
+        emptyMessage={searchTerm.trim() || statusFilter !== 'ALL' ? 'No matching projects.' : 'No projects yet.'}
         errorMessage={loadProjectsError}
+        footer={
+          <ProjectPagination
+            currentPage={paginatedProjects.currentPage}
+            totalPages={paginatedProjects.totalPages}
+            onPageChange={setCurrentPage}
+          />
+        }
         isLoading={isLoadingProjects}
-        projects={filteredProjects}
+        projects={paginatedProjects.items}
         showActiveState={showActiveState}
       />
     </motion.div>
