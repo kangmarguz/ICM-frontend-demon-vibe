@@ -6,6 +6,8 @@ export type AppUser = {
   email: string;
   role: Role;
   isActive?: boolean;
+  avatarUrl?: string | null;
+  avatarPublicId?: string | null;
   siteId?: string | null;
   site?: {
     id: string;

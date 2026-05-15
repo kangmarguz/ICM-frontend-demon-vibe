@@ -22,6 +22,11 @@ export type UpdateUserRequest = {
   newPassword?: string;
 };
 
+export type UpdateAvatarRequest = {
+  name: string;
+  file: string;
+};
+
 type UpdateUserApiResponse =
   | AppUser
   | {
@@ -68,5 +73,19 @@ export async function updateUser(userId: string, payload: UpdateUserRequest, cur
     ...currentUser,
     name: payload.name,
     forceResetPassword: payload.newPassword ? false : currentUser.forceResetPassword,
+  });
+}
+
+export async function updateUserAvatar(userId: string, payload: UpdateAvatarRequest, currentUser: AppUser) {
+  const response = await apiClient.patch<UpdateUserApiResponse>(`/users/${userId}/avatar`, payload);
+  return normalizeUpdateUserResponse(response.data, currentUser);
+}
+
+export async function deleteUserAvatar(userId: string, currentUser: AppUser) {
+  const response = await apiClient.delete<UpdateUserApiResponse>(`/users/${userId}/avatar`);
+  return normalizeUpdateUserResponse(response.data, {
+    ...currentUser,
+    avatarUrl: null,
+    avatarPublicId: null,
   });
 }

@@ -156,9 +156,17 @@ export function AppLayout() {
             </div>
           </div>
           <div className="flex min-w-[180px] max-w-[min(360px,55vw)] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm ring-1 ring-slate-100">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white shadow-sm shadow-indigo-100">
-              <UserRound size={18} />
-            </div>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                className="h-9 w-9 shrink-0 rounded-md object-cover shadow-sm shadow-slate-200"
+              />
+            ) : (
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white shadow-sm shadow-indigo-100">
+                <UserRound size={18} />
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">
                 <p className="truncate text-sm font-semibold text-slate-950">{user?.name}</p>

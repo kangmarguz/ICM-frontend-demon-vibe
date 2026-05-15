@@ -1,11 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { LoaderCircle, Save, Settings, UserRound } from 'lucide-react';
+import { Camera, LoaderCircle, Save, Settings, Trash2, UserRound } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import type { ChangeEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { getApiErrorMessage, toastAsync } from '../lib/toast';
-import { updateUser } from '../services/authApi';
+import { deleteUserAvatar, updateUser, updateUserAvatar } from '../services/authApi';
+import { resizeImageToBase64 } from '../lib/resizeImageToBase64';
 import { useAuthStore } from '../stores/authStore';
 
 const DEFAULT_RESET_PASSWORD = '12345678';
@@ -38,8 +40,10 @@ type SettingsFormData = z.infer<ReturnType<typeof createSettingsSchema>>;
 export function SettingsPage() {
   const user = useAuthStore((state) => state.user)!;
   const actionSetUser = useAuthStore((state) => state.actionSetUser);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const forceResetPassword = Boolean(user.forceResetPassword);
 
   const {
@@ -103,6 +107,63 @@ export function SettingsPage() {
     }
   };
 
+  const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      setSaveError('');
+      setSaveSuccess('');
+      setIsUploadingAvatar(true);
+      const base64 = await resizeImageToBase64(file);
+      const updatedUser = await toastAsync(
+        () =>
+          updateUserAvatar(
+            user.id,
+            {
+              name: file.name,
+              file: base64,
+            },
+            user,
+          ),
+        {
+          pending: 'Uploading avatar...',
+          success: 'Avatar updated.',
+          error: 'Cannot upload avatar.',
+        },
+      );
+
+      actionSetUser(updatedUser);
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, 'Cannot upload avatar.'));
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      setSaveError('');
+      setSaveSuccess('');
+      setIsUploadingAvatar(true);
+      const updatedUser = await toastAsync(() => deleteUserAvatar(user.id, user), {
+        pending: 'Removing avatar...',
+        success: 'Avatar removed.',
+        error: 'Cannot remove avatar.',
+      });
+
+      actionSetUser(updatedUser);
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, 'Cannot remove avatar.'));
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -136,14 +197,47 @@ export function SettingsPage() {
           transition={{ delay: 0.1, duration: 0.3, ease: 'easeOut' }}
           className="rounded-lg border border-slate-200 p-4"
         >
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded bg-sky-50 text-sky-700">
-            <UserRound size={22} />
-          </div>
+          {user.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user.name} className="mb-4 h-20 w-20 rounded-2xl object-cover shadow-sm shadow-slate-200" />
+          ) : (
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+              <UserRound size={30} />
+            </div>
+          )}
           <p className="font-semibold text-slate-950">{user.name}</p>
           <p className="mt-1 text-sm text-slate-500">{user.email}</p>
           <p className="mt-3 w-fit rounded bg-sky-50 px-3 py-1 text-xs font-semibold uppercase text-sky-700">
             {user.role}
           </p>
+          <div className="mt-4 space-y-2">
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+            <button
+              type="button"
+              disabled={isUploadingAvatar}
+              onClick={() => avatarInputRef.current?.click()}
+              className="inline-flex w-full items-center justify-center gap-2 rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+            >
+              {isUploadingAvatar ? <LoaderCircle size={16} className="animate-spin" /> : <Camera size={16} />}
+              {user.avatarUrl ? 'Change avatar' : 'Upload avatar'}
+            </button>
+            {user.avatarUrl ? (
+              <button
+                type="button"
+                disabled={isUploadingAvatar}
+                onClick={handleRemoveAvatar}
+                className="inline-flex w-full items-center justify-center gap-2 rounded border border-rose-200 px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+              >
+                {isUploadingAvatar ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                Remove avatar
+              </button>
+            ) : null}
+          </div>
         </motion.aside>
 
         <motion.form
