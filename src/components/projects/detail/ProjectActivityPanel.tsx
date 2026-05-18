@@ -6,6 +6,7 @@ import { createProjectComment, fetchProjectActivities } from '../../../services/
 import type { ProjectActivity } from '../../../types/activity';
 
 type ProjectActivityPanelProps = {
+  canComment: boolean;
   projectId: string;
   refreshKey: number;
 };
@@ -20,7 +21,7 @@ const actionLabel: Record<string, string> = {
   COMMENT: 'Commented',
 };
 
-export function ProjectActivityPanel({ projectId, refreshKey }: ProjectActivityPanelProps) {
+export function ProjectActivityPanel({ canComment, projectId, refreshKey }: ProjectActivityPanelProps) {
   const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [comment, setComment] = useState('');
   const [error, setError] = useState('');
@@ -101,25 +102,27 @@ export function ProjectActivityPanel({ projectId, refreshKey }: ProjectActivityP
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-        <label className="sr-only" htmlFor="project-comment">Add comment</label>
-        <input
-          id="project-comment"
-          value={comment}
-          onChange={(event) => setComment(event.target.value)}
-          disabled={isSubmitting}
-          placeholder="Add a comment"
-          className="min-w-0 flex-1 rounded border border-slate-300 px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500 disabled:bg-slate-100"
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting || !comment.trim()}
-          className="inline-flex items-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          <Send size={15} />
-          Send
-        </button>
-      </form>
+      {canComment ? (
+        <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+          <label className="sr-only" htmlFor="project-comment">Add comment</label>
+          <input
+            id="project-comment"
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            disabled={isSubmitting}
+            placeholder="Add a comment"
+            className="min-w-0 flex-1 rounded border border-slate-300 px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500 disabled:bg-slate-100"
+          />
+          <button
+            type="submit"
+            disabled={isSubmitting || !comment.trim()}
+            className="inline-flex items-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            <Send size={15} />
+            Send
+          </button>
+        </form>
+      ) : null}
 
       {error ? <div className="mt-4 rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
 

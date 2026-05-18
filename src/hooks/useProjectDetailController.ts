@@ -422,5 +422,6 @@ export function useProjectDetailController() {
     showActiveState,
     showProjectControls,
     submitProject: onSubmit,
+    user,
   };
 }

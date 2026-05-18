@@ -39,6 +39,7 @@ export function ProjectDetailPage() {
     showActiveState,
     showProjectControls,
     submitProject,
+    user,
   } = useProjectDetailController();
 
   return (
@@ -95,7 +96,7 @@ export function ProjectDetailPage() {
           />
 
           <div className="lg:col-span-2">
-            <ProjectActivityPanel projectId={project.id} refreshKey={activityRefreshKey} />
+            <ProjectActivityPanel canComment={user.role !== 'GUEST'} projectId={project.id} refreshKey={activityRefreshKey} />
           </div>
         </div>
       ) : (
