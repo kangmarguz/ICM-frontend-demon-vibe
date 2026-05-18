@@ -2,8 +2,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { LoaderCircle, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { ChangeEvent, DragEvent } from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import type { AppUser } from '../../types/auth';
 import type { ImageType } from '../../types/project';
 import type { Site } from '../../types/site';
 import { ProjectFileField } from './ProjectFileField';
@@ -19,6 +20,7 @@ import {
 type ProjectFormProps = {
   canCreate: boolean;
   sites?: Site[];
+  users?: AppUser[];
   errorMessage?: string;
   helperText: string;
   onCreate: (payload: CreateProjectFormPayload) => Promise<void> | void;
@@ -35,6 +37,7 @@ const emptyPendingImages: Record<ImageType, PendingImage[]> = {
 export function ProjectForm({
   canCreate,
   sites = [],
+  users = [],
   errorMessage,
   helperText,
   onCreate,
@@ -46,6 +49,8 @@ export function ProjectForm({
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -54,12 +59,36 @@ export function ProjectForm({
       description: '',
       urlLink: '',
       siteId: '',
+      assignedUserId: '',
       status: 'PENDING',
       isActive: true,
     },
   });
   const [pendingImages, setPendingImages] = useState<Record<ImageType, PendingImage[]>>(emptyPendingImages);
   const [draggingField, setDraggingField] = useState<ImageType | null>(null);
+  const selectedSiteId = watch('siteId');
+  const selectedAssignedUserId = watch('assignedUserId');
+  const assignableUsers = useMemo(
+    () =>
+      users.filter(
+        (user) =>
+          user.role === 'USER' &&
+          user.isActive !== false &&
+          Boolean(user.siteId) &&
+          (!selectedSiteId || user.siteId === selectedSiteId),
+      ),
+    [selectedSiteId, users],
+  );
+
+  useEffect(() => {
+    if (!selectedAssignedUserId) {
+      return;
+    }
+
+    if (!assignableUsers.some((user) => user.id === selectedAssignedUserId)) {
+      setValue('assignedUserId', '');
+    }
+  }, [assignableUsers, selectedAssignedUserId, setValue]);
 
   const addFiles = (type: ImageType, fileList: FileList | File[]) => {
     const imageFiles = Array.from(fileList).filter((file) => file.type.startsWith('image/'));
@@ -122,6 +151,7 @@ export function ProjectForm({
       description: '',
       urlLink: '',
       siteId: '',
+      assignedUserId: '',
       status: 'PENDING',
       isActive: true,
     });
@@ -142,6 +172,7 @@ export function ProjectForm({
       description: data.description ?? '',
       urlLink: data.urlLink ?? '',
       siteId: data.siteId,
+      assignedUserId: data.assignedUserId,
       status: data.status,
       isActive: data.isActive,
       images: imageFields.flatMap((field) =>
@@ -205,21 +236,40 @@ export function ProjectForm({
         {showProjectControls ? (
           <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
             {showSiteControl ? (
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-medium text-slate-700">Site</span>
-                <select
-                  {...register('siteId')}
-                  disabled={!canCreate || isSubmitting}
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
-                >
-                  <option value="">Select site</option>
-                  {sites.map((site) => (
-                    <option key={site.id} value={site.id}>
-                      {site.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <>
+                <label className="block sm:col-span-2">
+                  <span className="text-sm font-medium text-slate-700">Site</span>
+                  <select
+                    {...register('siteId')}
+                    disabled={!canCreate || isSubmitting}
+                    className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+                  >
+                    <option value="">Select site</option>
+                    {sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block sm:col-span-2">
+                  <span className="text-sm font-medium text-slate-700">Assign to user</span>
+                  <select
+                    {...register('assignedUserId')}
+                    disabled={!canCreate || isSubmitting || assignableUsers.length === 0}
+                    className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+                  >
+                    <option value="">No assigned user</option>
+                    {assignableUsers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-slate-500">Only active USER accounts in the selected site are available.</p>
+                </label>
+              </>
             ) : null}
 
             <label className="block">

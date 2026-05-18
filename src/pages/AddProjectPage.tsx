@@ -9,8 +9,10 @@ import { getApiErrorMessage, toastAsync } from '../lib/toast';
 import { fetchSites } from '../services/siteApi';
 import { createProject as createProjectApi } from '../services/projectApi';
 import { uploadToCloudinary } from '../services/uploadApi';
+import { fetchUsers } from '../services/userApi';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
+import type { AppUser } from '../types/auth';
 import type { Project } from '../types/project';
 import type { Site } from '../types/site';
 
@@ -20,6 +22,7 @@ export function AddProjectPage() {
   const navigate = useNavigate();
   const [createError, setCreateError] = useState('');
   const [sites, setSites] = useState<Site[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
 
   const canCreate = user.role === 'USER' || user.role === 'ADMIN';
   const helperText = useMemo(() => {
@@ -37,25 +40,26 @@ export function AddProjectPage() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadSites() {
+    async function loadAdminOptions() {
       if (user.role !== 'ADMIN') {
         return;
       }
 
       try {
-        const loadedSites = await fetchSites();
+        const [loadedSites, loadedUsers] = await Promise.all([fetchSites(), fetchUsers()]);
 
         if (isMounted) {
           setSites(loadedSites.filter((site) => site.isActive));
+          setUsers(loadedUsers);
         }
       } catch {
         if (isMounted) {
-          setCreateError('Cannot load sites.');
+          setCreateError('Cannot load admin project options.');
         }
       }
     }
 
-    loadSites();
+    loadAdminOptions();
 
     return () => {
       isMounted = false;
@@ -90,6 +94,7 @@ export function AddProjectPage() {
             description: payload.description,
             urlLink: payload.urlLink,
             siteId: payload.siteId,
+            assignedUserId: payload.assignedUserId,
             status: payload.status,
             isActive: payload.isActive,
             images: uploadedImages,
@@ -141,6 +146,7 @@ export function AddProjectPage() {
       <ProjectForm
         canCreate={canCreate}
         sites={sites}
+        users={users}
         errorMessage={createError}
         helperText={helperText}
         onCreate={handleCreateProject}

@@ -6,6 +6,7 @@ export type CreateProjectRequest = {
   description?: string;
   urlLink?: string;
   siteId?: string;
+  assignedUserId?: string;
   status: ProjectStatus;
   isActive: boolean;
   images: Array<{
@@ -32,7 +33,8 @@ export type UpdateProjectRequest = {
 };
 
 type CreateProjectApiResponse = Project | {
-  data: Project;
+  data?: Project | { project?: Project };
+  project?: Project;
 };
 
 type ProjectDetailApiResponse = unknown;
@@ -47,11 +49,19 @@ type ProjectApiResponse = Project & {
 type GetProjectsApiResponse = unknown;
 
 function normalizeCreateProjectResponse(response: CreateProjectApiResponse) {
-  if ('data' in response) {
-    return response.data;
+  if ('id' in response) {
+    return normalizeProject(response as ProjectApiResponse);
   }
 
-  return response;
+  if (response.project) {
+    return normalizeProject(response.project as ProjectApiResponse);
+  }
+
+  if (response.data && 'id' in response.data) {
+    return normalizeProject(response.data as ProjectApiResponse);
+  }
+
+  return normalizeProject(response.data?.project as ProjectApiResponse);
 }
 
 function normalizeProjectResponse(response: ProjectDetailApiResponse) {
