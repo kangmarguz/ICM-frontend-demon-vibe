@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { ProjectActivityPanel } from '../components/projects/detail/ProjectActivityPanel';
 import { ProjectDetailHeader } from '../components/projects/detail/ProjectDetailHeader';
 import { ProjectImagesPanel } from '../components/projects/detail/ProjectImagesPanel';
 import { ProjectInfoPanel } from '../components/projects/detail/ProjectInfoPanel';
@@ -6,6 +7,7 @@ import { useProjectDetailController } from '../hooks/useProjectDetailController'
 
 export function ProjectDetailPage() {
   const {
+    activityRefreshKey,
     canEdit,
     deletingPublicId,
     draggingField,
@@ -91,6 +93,10 @@ export function ProjectDetailPage() {
             onUploadImages={handleUploadImages}
             pendingImages={pendingImages}
           />
+
+          <div className="lg:col-span-2">
+            <ProjectActivityPanel projectId={project.id} refreshKey={activityRefreshKey} />
+          </div>
         </div>
       ) : (
         <div className="rounded-lg border border-slate-200 bg-white px-6 py-10 text-sm text-slate-500">Project not found.</div>

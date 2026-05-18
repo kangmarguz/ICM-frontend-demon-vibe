@@ -3,6 +3,9 @@ import { toast } from 'react-toastify';
 
 type ApiErrorResponse = {
   message?: string;
+  status?: {
+    message?: string;
+  };
 };
 
 type AsyncToastMessages<T> = {
@@ -13,7 +16,9 @@ type AsyncToastMessages<T> = {
 
 export function getApiErrorMessage(error: unknown, fallback: string) {
   if (error instanceof AxiosError) {
-    return (error.response?.data as ApiErrorResponse | undefined)?.message ?? fallback;
+    const data = error.response?.data as ApiErrorResponse | undefined;
+
+    return data?.message ?? data?.status?.message ?? fallback;
   }
 
   if (error instanceof Error && error.message) {

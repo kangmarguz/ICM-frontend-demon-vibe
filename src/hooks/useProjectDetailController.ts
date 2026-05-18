@@ -31,11 +31,16 @@ const editProjectSchema = z.object({
 
 type ApiErrorResponse = {
   message?: string;
+  status?: {
+    message?: string;
+  };
 };
 
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (error instanceof AxiosError) {
-    return (error.response?.data as ApiErrorResponse | undefined)?.message ?? fallback;
+    const data = error.response?.data as ApiErrorResponse | undefined;
+
+    return data?.message ?? data?.status?.message ?? fallback;
   }
 
   return fallback;
@@ -81,6 +86,7 @@ export function useProjectDetailController() {
   const [deletingPublicId, setDeletingPublicId] = useState<string | null>(null);
   const [draggingField, setDraggingField] = useState<ImageType | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [pendingImages, setPendingImages] = useState<Record<ImageType, PendingImage[]>>(emptyPendingImages);
   const canEdit = user.role === 'ADMIN' || project?.createdById === user.id;
   const showProjectControls = user.role !== 'USER';
@@ -257,6 +263,7 @@ export function useProjectDetailController() {
 
       setProject(updatedProject);
       actionUpdateProject(updatedProject);
+      setActivityRefreshKey((value) => value + 1);
       setSaveSuccess('Project updated.');
       setIsEditing(false);
     } catch (error) {
@@ -337,6 +344,7 @@ export function useProjectDetailController() {
 
       setProject(updatedProject);
       actionUpdateProject(updatedProject);
+      setActivityRefreshKey((value) => value + 1);
       clearPendingImages();
       setImageSuccess('Images uploaded.');
     } catch (error) {
@@ -372,6 +380,7 @@ export function useProjectDetailController() {
 
       setProject(updatedProject);
       actionUpdateProject(updatedProject);
+      setActivityRefreshKey((value) => value + 1);
       setImageSuccess('Image deleted.');
     } catch (error) {
       setImageError(getApiErrorMessage(error, 'Cannot delete image.'));
@@ -382,6 +391,7 @@ export function useProjectDetailController() {
 
   return {
     canEdit,
+    activityRefreshKey,
     deletingPublicId,
     draggingField,
     errors,
