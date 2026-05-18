@@ -1,26 +1,28 @@
-import { AxiosError } from 'axios';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ProjectForm } from '../components/projects/ProjectForm';
 import type { CreateProjectFormPayload } from '../components/projects/projectFormSchema';
 import { resizeImageToBase64 } from '../lib/resizeImageToBase64';
+import { getApiErrorMessage, toastAsync } from '../lib/toast';
+import { fetchSites } from '../services/siteApi';
 import { createProject as createProjectApi } from '../services/projectApi';
 import { uploadToCloudinary } from '../services/uploadApi';
+import { fetchUsers } from '../services/userApi';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
+import type { AppUser } from '../types/auth';
 import type { Project } from '../types/project';
-
-type ApiErrorResponse = {
-  message?: string;
-};
+import type { Site } from '../types/site';
 
 export function AddProjectPage() {
   const user = useAuthStore((state) => state.user)!;
   const actionAddProject = useProjectStore((state) => state.actionAddProject);
   const navigate = useNavigate();
   const [createError, setCreateError] = useState('');
+  const [sites, setSites] = useState<Site[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
 
   const canCreate = user.role === 'USER' || user.role === 'ADMIN';
   const helperText = useMemo(() => {
@@ -35,45 +37,80 @@ export function AddProjectPage() {
     return 'Create a project under your account.';
   }, [user.role]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAdminOptions() {
+      if (user.role !== 'ADMIN') {
+        return;
+      }
+
+      try {
+        const [loadedSites, loadedUsers] = await Promise.all([fetchSites(), fetchUsers()]);
+
+        if (isMounted) {
+          setSites(loadedSites.filter((site) => site.isActive));
+          setUsers(loadedUsers);
+        }
+      } catch {
+        if (isMounted) {
+          setCreateError('Cannot load admin project options.');
+        }
+      }
+    }
+
+    loadAdminOptions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user.role]);
+
   const handleCreateProject = async (payload: CreateProjectFormPayload) => {
     try {
       setCreateError('');
+      const createdProject = await toastAsync(
+        async () => {
+          const uploadedImages = await Promise.all(
+            payload.images.map(async (image) => {
+              const base64 = await resizeImageToBase64(image.file);
+              const uploadedImage = await uploadToCloudinary({
+                name: image.name,
+                file: base64,
+                type: image.type,
+              });
 
-      const uploadedImages = await Promise.all(
-        payload.images.map(async (image) => {
-          const base64 = await resizeImageToBase64(image.file);
-          const uploadedImage = await uploadToCloudinary({
-            name: image.name,
-            file: base64,
-            type: image.type,
+              return {
+                name: uploadedImage.name,
+                url: uploadedImage.url,
+                publicId: uploadedImage.publicId ?? null,
+                type: image.type,
+              };
+            }),
+          );
+
+          return createProjectApi({
+            title: payload.title,
+            description: payload.description,
+            urlLink: payload.urlLink,
+            siteId: payload.siteId,
+            assignedUserId: payload.assignedUserId,
+            status: payload.status,
+            isActive: payload.isActive,
+            images: uploadedImages,
           });
-
-          return {
-            name: uploadedImage.name,
-            url: uploadedImage.url,
-            publicId: uploadedImage.publicId ?? null,
-            type: image.type,
-          };
-        }),
+        },
+        {
+          pending: 'Creating project...',
+          success: 'Project created successfully.',
+          error: 'Cannot create project. Please check project data and uploaded files.',
+        },
       );
-
-      const createdProject = await createProjectApi({
-        title: payload.title,
-        description: payload.description,
-        status: payload.status,
-        isActive: payload.isActive,
-        images: uploadedImages,
-      });
 
       actionAddProject(normalizeProjectForClient(createdProject, user.id));
       navigate('/projects', { replace: true });
     } catch (error) {
-      const message =
-        error instanceof AxiosError
-          ? (error.response?.data as ApiErrorResponse | undefined)?.message
-          : undefined;
-
-      setCreateError(message ?? 'Cannot create project. Please check project data and uploaded files.');
+      setCreateError(getApiErrorMessage(error, 'Cannot create project. Please check project data and uploaded files.'));
       throw error;
     }
   };
@@ -108,9 +145,12 @@ export function AddProjectPage() {
 
       <ProjectForm
         canCreate={canCreate}
+        sites={sites}
+        users={users}
         errorMessage={createError}
         helperText={helperText}
         onCreate={handleCreateProject}
+        showSiteControl={user.role === 'ADMIN'}
         showProjectControls={user.role !== 'USER'}
       />
     </motion.div>
@@ -123,6 +163,7 @@ function normalizeProjectForClient(project: Project, fallbackUserId: string): Pr
   return {
     ...project,
     description: project.description ?? null,
+    urlLink: project.urlLink ?? null,
     createdAt: project.createdAt ?? now,
     updatedAt: project.updatedAt ?? now,
     createdById: project.createdById ?? fallbackUserId,

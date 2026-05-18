@@ -7,7 +7,19 @@ import { ProjectsPage } from '../pages/ProjectsPage';
 import { AddProjectPage } from '../pages/AddProjectPage';
 import { ProjectDetailPage } from '../pages/ProjectDetailPage';
 import { UsersPage } from '../pages/UsersPage';
+import { SitesPage } from '../pages/SitesPage';
 import { SettingsPage } from '../pages/SettingsPage';
+import { useAuthStore } from '../stores/authStore';
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((state) => state.user);
+
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
 
 export const router = createBrowserRouter([
   {
@@ -25,7 +37,8 @@ export const router = createBrowserRouter([
           { path: 'projects', element: <ProjectsPage /> },
           { path: 'projects/new', element: <AddProjectPage /> },
           { path: 'projects/:projectId', element: <ProjectDetailPage /> },
-          { path: 'users', element: <UsersPage /> },
+          { path: 'users', element: <AdminRoute><UsersPage /></AdminRoute> },
+          { path: 'sites', element: <AdminRoute><SitesPage /></AdminRoute> },
           { path: 'settings', element: <SettingsPage /> },
         ],
       },

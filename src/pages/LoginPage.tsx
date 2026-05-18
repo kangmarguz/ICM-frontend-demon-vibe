@@ -1,16 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AxiosError } from 'axios';
-import { Eye, EyeOff, KeyRound, LockKeyhole, Mail } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, LoaderCircle, LockKeyhole, Mail } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { getApiErrorMessage, toastAsync } from '../lib/toast';
 import { login } from '../services/authApi';
 import { useAuthStore } from '../stores/authStore';
 
 const loginSchema = z.object({
-  email: z.string().trim().min(1, 'กรอก email').email('รูปแบบ email ไม่ถูกต้อง'),
-  password: z.string().min(8, 'password อย่างน้อย 8 ตัวอักษร'),
+  email: z.string().trim().min(1, 'Email is required').email('Email format is invalid'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -19,10 +20,6 @@ type LocationState = {
   from?: {
     pathname?: string;
   };
-};
-
-type ApiErrorResponse = {
-  message?: string;
 };
 
 export function LoginPage() {
@@ -53,19 +50,23 @@ export function LoginPage() {
   const handleLogin = async (data: LoginFormData) => {
     try {
       setAuthError('');
-      const session = await login({
-        email: data.email.trim(),
-        password: data.password,
-      });
+      const session = await toastAsync(
+        () =>
+          login({
+            email: data.email.trim(),
+            password: data.password,
+          }),
+        {
+          pending: 'Signing in...',
+          success: 'Logged in successfully.',
+          error: 'Cannot log in. Please check your credentials.',
+        },
+      );
+
       actionSetSession(session);
       navigate(from, { replace: true });
     } catch (error) {
-      const message =
-        error instanceof AxiosError
-          ? (error.response?.data as ApiErrorResponse | undefined)?.message
-          : undefined;
-
-      setAuthError(message ?? 'ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบข้อมูลอีกครั้ง');
+      setAuthError(getApiErrorMessage(error, 'Unable to log in. Please verify your credentials.'));
     }
   };
 
@@ -73,32 +74,52 @@ export function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-sky-50 px-4 py-10 text-slate-900">
-      <section className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-sky-100 bg-white shadow-sm shadow-sky-100 md:grid-cols-[0.9fr_1.1fr]">
-        <div className="flex min-h-[560px] flex-col justify-between bg-sky-100 p-8">
+      <motion.section
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-sky-100 bg-white shadow-sm shadow-sky-100 md:grid-cols-[0.9fr_1.1fr]"
+      >
+        <motion.div
+          initial={{ opacity: 0, x: -14 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.08, duration: 0.32, ease: 'easeOut' }}
+          className="flex min-h-[560px] flex-col justify-between bg-sky-100 p-8"
+        >
           <div>
-            <div className="mb-8 flex h-12 w-12 items-center justify-center rounded bg-sky-500 text-white">
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.18, duration: 0.25, ease: 'easeOut' }}
+              className="mb-8 flex h-12 w-12 items-center justify-center rounded bg-sky-500 text-white"
+            >
               <LockKeyhole size={24} />
-            </div>
+            </motion.div>
             <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Protected workspace</p>
             <h1 className="mt-3 text-3xl font-semibold leading-tight text-slate-950">Project Task Manager</h1>
             <p className="mt-4 text-sm leading-6 text-slate-600">
-              เข้าสู่ระบบด้วยบัญชีจริงจาก backend ก่อนใช้งาน workspace และ route ภายในทั้งหมด
+              Sign in with your backend account before using the workspace and protected routes.
             </p>
           </div>
 
           <div className="rounded border border-sky-200 bg-white/70 p-4">
             <p className="text-sm font-semibold text-slate-950">Secure access</p>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              ระบบจะตรวจสอบบัญชีก่อนเปิด workspace สำหรับ project, task และ permission ของแต่ละ role
+              The system verifies your account before opening the workspace for projects, tasks, and role-based access.
             </p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="flex items-center p-6 md:p-10">
+        <motion.div
+          initial={{ opacity: 0, x: 14 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.14, duration: 0.32, ease: 'easeOut' }}
+          className="flex items-center p-6 md:p-10"
+        >
           <div className="w-full">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-slate-950">Sign in</h2>
-              <p className="mt-1 text-sm text-slate-500">กรอก email และ password เพื่อเข้า dashboard</p>
+              <p className="mt-1 text-sm text-slate-500">Enter your email and password to access the dashboard.</p>
             </div>
 
             <form onSubmit={handleSubmit(handleLogin)} className="space-y-4">
@@ -148,18 +169,20 @@ export function LoginPage() {
                 <div className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{authError}</div>
               ) : null}
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={isSubmitting}
+                whileHover={isSubmitting ? undefined : { y: -1 }}
+                whileTap={isSubmitting ? undefined : { scale: 0.99 }}
                 className="flex w-full items-center justify-center gap-2 rounded bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-sky-300"
               >
-                <LockKeyhole size={16} />
+                {isSubmitting ? <LoaderCircle size={16} className="animate-spin" /> : <LockKeyhole size={16} />}
                 {isSubmitting ? 'Logging in...' : 'Login'}
-              </button>
+              </motion.button>
             </form>
           </div>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
     </main>
   );
 }

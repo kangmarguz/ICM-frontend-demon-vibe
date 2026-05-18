@@ -4,6 +4,9 @@ import type { ImageType, Project, ProjectImage, ProjectStatus } from '../types/p
 export type CreateProjectRequest = {
   title: string;
   description?: string;
+  urlLink?: string;
+  siteId?: string;
+  assignedUserId?: string;
   status: ProjectStatus;
   isActive: boolean;
   images: Array<{
@@ -17,8 +20,11 @@ export type CreateProjectRequest = {
 export type UpdateProjectRequest = {
   title: string;
   description?: string;
-  status: ProjectStatus;
-  isActive: boolean;
+  urlLink?: string;
+  siteId?: string | null;
+  assignedUserId?: string;
+  status?: ProjectStatus;
+  isActive?: boolean;
   images?: Array<{
     name: string;
     url: string;
@@ -28,7 +34,8 @@ export type UpdateProjectRequest = {
 };
 
 type CreateProjectApiResponse = Project | {
-  data: Project;
+  data?: Project | { project?: Project };
+  project?: Project;
 };
 
 type ProjectDetailApiResponse = unknown;
@@ -43,11 +50,19 @@ type ProjectApiResponse = Project & {
 type GetProjectsApiResponse = unknown;
 
 function normalizeCreateProjectResponse(response: CreateProjectApiResponse) {
-  if ('data' in response) {
-    return response.data;
+  if ('id' in response) {
+    return normalizeProject(response as ProjectApiResponse);
   }
 
-  return response;
+  if (response.project) {
+    return normalizeProject(response.project as ProjectApiResponse);
+  }
+
+  if (response.data && 'id' in response.data) {
+    return normalizeProject(response.data as ProjectApiResponse);
+  }
+
+  return normalizeProject(response.data?.project as ProjectApiResponse);
 }
 
 function normalizeProjectResponse(response: ProjectDetailApiResponse) {
@@ -103,6 +118,7 @@ function normalizeProject(project: ProjectApiResponse): Project {
     ...project,
     createdById: project.createdById ?? getOptionalString(createdBy, 'id') ?? null,
     description: project.description ?? null,
+    urlLink: project.urlLink ?? null,
     images: normalizeProjectImages(project),
   };
 }

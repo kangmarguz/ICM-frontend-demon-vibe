@@ -1,4 +1,4 @@
-export type ProjectStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type ProjectStatus = 'PENDING' | 'PROGRESS' | 'COMPLETED' | 'CANCELLED';
 export type ImageType = 'IMAGE_2D' | 'IMAGE_3D' | 'PAY_SLIP';
 
 export type ProjectImage = {
@@ -16,8 +16,22 @@ export type Project = {
   id: string;
   title: string;
   description?: string | null;
+  urlLink?: string | null;
   status: ProjectStatus;
   isActive: boolean;
+  siteId?: string | null;
+  site?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    isActive: boolean;
+  } | null;
+  createdBy?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
   createdById?: string | null;
