@@ -26,6 +26,12 @@ export type Project = {
     description?: string | null;
     isActive: boolean;
   } | null;
+  createdBy?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
   createdById?: string | null;

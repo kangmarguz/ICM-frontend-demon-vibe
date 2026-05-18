@@ -2,12 +2,14 @@ import { Save } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { FormEventHandler } from 'react';
 import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import type { AppUser } from '../../../types/auth';
 import { projectStatuses } from '../projectFormSchema';
 
 export type EditProjectFormData = {
   title: string;
   description?: string;
   urlLink?: string;
+  assignedUserId?: string;
   status: 'PENDING' | 'PROGRESS' | 'COMPLETED' | 'CANCELLED';
   isActive: boolean;
 };
@@ -16,6 +18,7 @@ type ProjectEditFormProps = {
   canEdit: boolean;
   errors: FieldErrors<EditProjectFormData>;
   isSubmitting: boolean;
+  assignableUsers: AppUser[];
   register: UseFormRegister<EditProjectFormData>;
   saveError: string;
   saveSuccess: string;
@@ -27,6 +30,7 @@ export function ProjectEditForm({
   canEdit,
   errors,
   isSubmitting,
+  assignableUsers,
   onSubmit,
   register,
   saveError,
@@ -68,6 +72,23 @@ export function ProjectEditForm({
 
       {showProjectControls ? (
         <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+          <label className="block sm:col-span-2">
+            <span className="text-sm font-medium text-slate-700">Assign to user</span>
+            <select
+              {...register('assignedUserId')}
+              disabled={!canEdit || isSubmitting || assignableUsers.length === 0}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100"
+            >
+              <option value="">No assigned user</option>
+              {assignableUsers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} ({user.email})
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">Only active USER accounts in this project site are available.</p>
+          </label>
+
           <label className="block">
             <span className="text-sm font-medium text-slate-700">Status</span>
             <select

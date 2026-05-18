@@ -2,6 +2,7 @@ import { Settings, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { FormEventHandler } from 'react';
 import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import type { AppUser } from '../../../types/auth';
 import type { Project } from '../../../types/project';
 import { ProjectEditForm, type EditProjectFormData } from './ProjectEditForm';
 import { ProjectReadOnlyDetails } from './ProjectReadOnlyDetails';
@@ -12,6 +13,7 @@ type ProjectInfoPanelProps = {
   isEditing: boolean;
   isSubmitting: boolean;
   isUploadingImages: boolean;
+  assignableUsers: AppUser[];
   project: Project;
   register: UseFormRegister<EditProjectFormData>;
   saveError: string;
@@ -29,6 +31,7 @@ export function ProjectInfoPanel({
   isEditing,
   isSubmitting,
   isUploadingImages,
+  assignableUsers,
   onCancelEditing,
   onStartEditing,
   onSubmit,
@@ -82,6 +85,7 @@ export function ProjectInfoPanel({
 
       {isEditing ? (
         <ProjectEditForm
+          assignableUsers={assignableUsers}
           canEdit={canEdit}
           errors={errors}
           isSubmitting={isSubmitting}

@@ -22,6 +22,7 @@ export type UpdateProjectRequest = {
   description?: string;
   urlLink?: string;
   siteId?: string | null;
+  assignedUserId?: string;
   status?: ProjectStatus;
   isActive?: boolean;
   images?: Array<{

@@ -11,8 +11,10 @@ import { resizeImageToBase64 } from '../lib/resizeImageToBase64';
 import { toastAsync } from '../lib/toast';
 import { getProjectById, updateProject } from '../services/projectApi';
 import { deleteFromCloudinary, uploadToCloudinary } from '../services/uploadApi';
+import { fetchUsers } from '../services/userApi';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
+import type { AppUser } from '../types/auth';
 import type { ImageType, Project, ProjectImage } from '../types/project';
 
 const editProjectSchema = z.object({
@@ -26,6 +28,7 @@ const editProjectSchema = z.object({
     })
     .optional(),
   status: z.enum(['PENDING', 'PROGRESS', 'COMPLETED', 'CANCELLED']),
+  assignedUserId: z.string().trim().optional(),
   isActive: z.boolean(),
 });
 
@@ -51,6 +54,7 @@ function getProjectFormValues(project: Project): EditProjectFormData {
     title: project.title,
     description: project.description ?? '',
     urlLink: project.urlLink ?? '',
+    assignedUserId: project.createdById ?? '',
     status: project.status,
     isActive: project.isActive,
   };
@@ -87,6 +91,7 @@ export function useProjectDetailController() {
   const [draggingField, setDraggingField] = useState<ImageType | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
+  const [users, setUsers] = useState<AppUser[]>([]);
   const [pendingImages, setPendingImages] = useState<Record<ImageType, PendingImage[]>>(emptyPendingImages);
   const canEdit = user.role === 'ADMIN' || project?.createdById === user.id;
   const showProjectControls = user.role !== 'USER';
@@ -103,6 +108,7 @@ export function useProjectDetailController() {
       title: '',
       description: '',
       urlLink: '',
+      assignedUserId: '',
       status: 'PENDING',
       isActive: true,
     },
@@ -145,6 +151,34 @@ export function useProjectDetailController() {
   }, [actionUpdateProject, projectId, reset]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    async function loadUsers() {
+      if (user.role !== 'ADMIN') {
+        return;
+      }
+
+      try {
+        const loadedUsers = await fetchUsers();
+
+        if (isMounted) {
+          setUsers(loadedUsers);
+        }
+      } catch {
+        if (isMounted) {
+          setSaveError('Cannot load assignable users.');
+        }
+      }
+    }
+
+    loadUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user.role]);
+
+  useEffect(() => {
     if (project) {
       reset(getProjectFormValues(project));
     }
@@ -159,6 +193,20 @@ export function useProjectDetailController() {
       PAY_SLIP: images.filter((image) => image.type === 'PAY_SLIP'),
     };
   }, [project]);
+
+  const assignableUsers = useMemo(() => {
+    if (user.role !== 'ADMIN') {
+      return [];
+    }
+
+    return users.filter(
+      (candidate) =>
+        candidate.role === 'USER' &&
+        candidate.isActive !== false &&
+        Boolean(candidate.siteId) &&
+        (!project?.siteId || candidate.siteId === project.siteId),
+    );
+  }, [project?.siteId, user.role, users]);
 
   const clearPendingImages = () => {
     Object.values(pendingImages).forEach((images) => {
@@ -252,7 +300,9 @@ export function useProjectDetailController() {
             title: data.title,
             description: data.description ?? '',
             urlLink: data.urlLink ?? '',
-            ...(showProjectControls ? { status: data.status, isActive: data.isActive } : {}),
+            ...(showProjectControls
+              ? { status: data.status, isActive: data.isActive, assignedUserId: data.assignedUserId || undefined }
+              : {}),
           }),
         {
           pending: 'Updating project...',
@@ -392,6 +442,7 @@ export function useProjectDetailController() {
   return {
     canEdit,
     activityRefreshKey,
+    assignableUsers,
     deletingPublicId,
     draggingField,
     errors,

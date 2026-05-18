@@ -8,6 +8,7 @@ import { useProjectDetailController } from '../hooks/useProjectDetailController'
 export function ProjectDetailPage() {
   const {
     activityRefreshKey,
+    assignableUsers,
     canEdit,
     deletingPublicId,
     draggingField,
@@ -58,6 +59,7 @@ export function ProjectDetailPage() {
       ) : project ? (
         <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
           <ProjectInfoPanel
+            assignableUsers={assignableUsers}
             canEdit={canEdit}
             errors={errors}
             isEditing={isEditing}
